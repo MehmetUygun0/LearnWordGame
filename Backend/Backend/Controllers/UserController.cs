@@ -1,6 +1,7 @@
 ﻿using Backend.Models;
 using Backend.Utility;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,20 +17,25 @@ namespace Backend.Controllers
             _context = appContext;
         }
 
-        [HttpGet("/register")]
+        [HttpPost("/register")]
         public async Task<ActionResult> Register(string username, string password)
         {
             byte[] hashedPassword = SHA256.HashPassword(password);
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username && u.Password.SequenceEqual(hashedPassword));
-            if (user != null)
+            User? userFromDb = await _context.Users
+            .Where(u => u.UserName == username)
+            .FirstOrDefaultAsync();
+
+            if (userFromDb != null && userFromDb.Password.SequenceEqual(hashedPassword))
             {
-                return NotFound(new { message = "Kullanıcı bulunamadı." });
+                return NotFound(new { message = "Kullanıcı zaten var." });
             }
 
-            _context.Users.Add(new User { UserName = username, Password = hashedPassword });
+            await _context.Users.AddAsync(new User { UserName = username, Password = hashedPassword });
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+
         [HttpGet("/login")]
         public async Task<IActionResult> Login(string username, string password)
         {
@@ -42,7 +48,7 @@ namespace Backend.Controllers
             }
             else if (SHA256.VerifyPassword(password, userPassword))
             {
-                return Ok();
+                return Ok("Giriş Yapıldı");
             }
             else
             {

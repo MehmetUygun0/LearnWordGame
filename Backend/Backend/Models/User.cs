@@ -11,6 +11,5 @@ namespace Backend.Models
         public required string UserName { get; set; }
         [Required]
         public required byte[] Password { get; set; }
-        public DateTime CreatedAt { get; set; } =DateTime.Now;
     }
 }
