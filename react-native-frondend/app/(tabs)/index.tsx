@@ -1,5 +1,6 @@
+import React, { useState } from 'react';
+import { View, TextInput, Button, Alert, Platform, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
@@ -8,7 +9,37 @@ import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
 
 export default function HomeScreen() {
+  // 1. Eksik olan state'leri (durumları) tanımlıyoruz
+  const [Username, setUsername] = useState('');
+  const [Password, setPassword] = useState('');
+const formData = new FormData();
+formData.append('username', Username);
+formData.append('password', Password);
+  // 2. Eksik olan fonksiyonu tanımlıyoruz
+  const handleRegister = async () => {
+    try {
+      const response = await fetch('https://localhost:7047/register', { // <--- buraya backend URL
+        method: 'POST',
+        
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        Alert.alert('Başarılı', 'Kayıt başarılı!');
+      } else {
+        const errorData = await response.json();
+        Alert.alert('Hata', errorData.message || 'Kayıt başarısız!');
+      }
+    } catch (error) {
+      Alert.alert('Hata', 'Sunucuya ulaşılamıyor!');
+      console.error(error);
+    }
+  };
   return (
+    // 3. View ve ParallaxScrollView'u tek bir kapsayıcı (Fragment veya View) içine alıyoruz
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
@@ -17,63 +48,48 @@ export default function HomeScreen() {
           style={styles.reactLogo}
         />
       }>
+      
+      {/* Kayıt Formunu ParallaxScrollView içine taşıdık */}
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Kayıt Ol</ThemedText>
+        <TextInput
+          placeholder="Kullanıcı Adı"
+          value={Username}
+          onChangeText={setUsername}
+          style={styles.input}
+          placeholderTextColor="#888"
+        />
+        <TextInput
+          placeholder="Şifre"
+          value={Password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+          placeholderTextColor="#888"
+        />
+        <Button title="Kayıt Ol" onPress={handleRegister} />
+      </ThemedView>
+
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
+        <ThemedText type="title">Merhaba!</ThemedText>
         <HelloWave />
       </ThemedView>
+
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+        <ThemedText type="subtitle">Giriş Kısayolu</ThemedText>
         <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
+          Geliştirici menüsü için:{' '}
           <ThemedText type="defaultSemiBold">
             {Platform.select({
               ios: 'cmd + d',
               android: 'cmd + m',
               web: 'F12',
             })}
-          </ThemedText>{' '}
-          to open developer tools.
+          </ThemedText>
         </ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      {/* Link ve diğer içerikler buraya devam edebilir... */}
     </ParallaxScrollView>
   );
 }
@@ -83,10 +99,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginTop: 20,
   },
   stepContainer: {
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 20,
+    padding: 16,
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#fff',
+    color: '#000',
+    marginVertical: 5,
   },
   reactLogo: {
     height: 178,

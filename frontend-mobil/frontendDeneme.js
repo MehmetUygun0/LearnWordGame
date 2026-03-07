@@ -7,7 +7,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://192.168.1.XX:8000/login', { 
+      const response = await fetch('http://192.168.1.25/login', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
