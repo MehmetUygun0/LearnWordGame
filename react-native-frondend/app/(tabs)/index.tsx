@@ -1,126 +1,127 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, Platform, StyleSheet } from 'react-native';
-import { Image } from 'expo-image';
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const RegisterScreen = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-export default function HomeScreen() {
-  // 1. Eksik olan state'leri (durumları) tanımlıyoruz
-  const [Username, setUsername] = useState('');
-  const [Password, setPassword] = useState('');
-const formData = new FormData();
-formData.append('username', Username);
-formData.append('password', Password);
-  // 2. Eksik olan fonksiyonu tanımlıyoruz
+  // API Adresi (Emülatör için 10.0.2.2, Fiziksel cihaz için PC IP'nizi yazın)
+  const API_URL = "https://localhost:7047/register";
+
   const handleRegister = async () => {
+    if (!username || !password) {
+      Alert.alert("Hata", "Lütfen tüm alanları doldurun.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const response = await fetch('https://localhost:7047/register', { // <--- buraya backend URL
+      // Query string olarak gönderdiğin için URL'ye ekliyoruz
+      const response = await fetch(`${API_URL}?username=${username}&password=${password}`, {
         method: 'POST',
-        
         headers: {
           'Content-Type': 'application/json',
         },
-        body: formData,
       });
 
       if (response.ok) {
-        Alert.alert('Başarılı', 'Kayıt başarılı!');
+        Alert.alert("Başarılı", "Kullanıcı kaydı oluşturuldu!");
+        setUsername('');
+        setPassword('');
       } else {
         const errorData = await response.json();
-        Alert.alert('Hata', errorData.message || 'Kayıt başarısız!');
+        Alert.alert("Hata", errorData.message || "Kayıt sırasında bir sorun oluştu.");
       }
     } catch (error) {
-      Alert.alert('Hata', 'Sunucuya ulaşılamıyor!');
       console.error(error);
+      Alert.alert("Bağlantı Hatası", "Sunucuya ulaşılamadı. API'nin çalıştığından ve URL'nin doğru olduğundan emin olun.");
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
-    // 3. View ve ParallaxScrollView'u tek bir kapsayıcı (Fragment veya View) içine alıyoruz
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      
-      {/* Kayıt Formunu ParallaxScrollView içine taşıdık */}
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Kayıt Ol</ThemedText>
-        <TextInput
-          placeholder="Kullanıcı Adı"
-          value={Username}
-          onChangeText={setUsername}
-          style={styles.input}
-          placeholderTextColor="#888"
-        />
-        <TextInput
-          placeholder="Şifre"
-          value={Password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-          placeholderTextColor="#888"
-        />
-        <Button title="Kayıt Ol" onPress={handleRegister} />
-      </ThemedView>
+    <View style={styles.container}>
+      <Text style={styles.title}>Yeni Hesap Oluştur</Text>
 
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Merhaba!</ThemedText>
-        <HelloWave />
-      </ThemedView>
+      <TextInput
+        style={styles.input}
+        placeholder="Kullanıcı Adı"
+        value={username}
+        onChangeText={setUsername}
+        autoCapitalize="none"
+      />
 
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Giriş Kısayolu</ThemedText>
-        <ThemedText>
-          Geliştirici menüsü için:{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>
-        </ThemedText>
-      </ThemedView>
+      <TextInput
+        style={styles.input}
+        placeholder="Şifre"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
 
-      {/* Link ve diğer içerikler buraya devam edebilir... */}
-    </ParallaxScrollView>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Kayıt Ol</Text>
+        )}
+      </TouchableOpacity>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 20,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 20,
-    padding: 16,
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    textAlign: 'center',
+    color: '#333',
   },
   input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
     backgroundColor: '#fff',
-    color: '#000',
-    marginVertical: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginBottom: 15,
+    fontSize: 16,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  button: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+    elevation: 2,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
+
+export default RegisterScreen;
