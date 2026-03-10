@@ -1,7 +1,7 @@
 ﻿using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Backend
+namespace Backend.Data
 {
     public class AppDbContext : DbContext
     {
@@ -16,6 +16,8 @@ namespace Backend
                 .UseCollation("Turkish_CS_AS");
         }
         public DbSet<User> Users { get; set; }
+        public DbSet<Word> Words { get; set; }
+        public DbSet<WordSample> WordSamples { get; set; }
 
     }
 }
