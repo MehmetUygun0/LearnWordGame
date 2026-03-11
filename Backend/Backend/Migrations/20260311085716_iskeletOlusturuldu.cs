@@ -5,7 +5,7 @@
 namespace Backend.Migrations
 {
     /// <inheritdoc />
-    public partial class iskelet : Migration
+    public partial class iskeletOlusturuldu : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -28,7 +28,7 @@ namespace Backend.Migrations
                 name: "Words",
                 columns: table => new
                 {
-                    WordID = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EngWordName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     TurWordName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -36,26 +36,26 @@ namespace Backend.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Words", x => x.WordID);
+                    table.PrimaryKey("PK_Words", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
                 name: "WordSamples",
                 columns: table => new
                 {
-                    WordSamplesID = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     WordID = table.Column<int>(type: "int", nullable: false),
                     Samples = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_WordSamples", x => x.WordSamplesID);
+                    table.PrimaryKey("PK_WordSamples", x => x.Id);
                     table.ForeignKey(
                         name: "FK_WordSamples_Words_WordID",
                         column: x => x.WordID,
                         principalTable: "Words",
-                        principalColumn: "WordID",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 

@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260310211826_iskelet")]
-    partial class iskelet
+    [Migration("20260311085935_guncelleme")]
+    partial class guncelleme
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,11 +49,11 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Word", b =>
                 {
-                    b.Property<int>("WordID")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WordID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("EngWordName")
                         .IsRequired()
@@ -61,7 +61,6 @@ namespace Backend.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Picture")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TurWordName")
@@ -69,18 +68,18 @@ namespace Backend.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("WordID");
+                    b.HasKey("Id");
 
                     b.ToTable("Words");
                 });
 
             modelBuilder.Entity("Backend.Models.WordSample", b =>
                 {
-                    b.Property<int>("WordSamplesID")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WordSamplesID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Samples")
                         .IsRequired()
@@ -89,7 +88,7 @@ namespace Backend.Migrations
                     b.Property<int>("WordID")
                         .HasColumnType("int");
 
-                    b.HasKey("WordSamplesID");
+                    b.HasKey("Id");
 
                     b.HasIndex("WordID");
 
