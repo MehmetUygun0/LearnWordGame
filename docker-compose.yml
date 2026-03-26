@@ -1,14 +1,16 @@
-version: "3.9"
-
 services:
   api:
-    build: ./backend
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
     ports:
-      - "5000:8080"
+      - "5001:8080"
     depends_on:
       - db
     environment:
-      - ConnectionStrings__DefaultConnection=Server=db;Database=testdb;User=sa;Password=Your_password123;
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=db;Database=Project;User Id=sa;Password=Your_password123;TrustServerCertificate=True;MultipleActiveResultSets=true
+    restart: unless-stopped
 
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -20,6 +22,7 @@ services:
       - "1433:1433"
     volumes:
       - sqlvolume:/var/opt/mssql
+    restart: unless-stopped
 
 volumes:
   sqlvolume:

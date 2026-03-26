@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { apiRequest } from '@/lib/api';
+import config from '@/lib/config';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -7,18 +9,17 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://192.168.1.XX:8000/login', { 
+      const response = await apiRequest({
+        endpoint: `${config.ENDPOINTS.AUTH.LOGIN}?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (response.ok) {
         Alert.alert("Başarılı", "Hoş geldin " + username);
       } else {
-        Alert.alert("Hata", data.detail || "Giriş yapılamadı");
+        Alert.alert("Hata", data?.detail || data?.message || "Giriş yapılamadı");
       }
     } catch (error) {
       Alert.alert("Bağlantı Hatası", "Backend sunucusuna ulaşılamıyor.");

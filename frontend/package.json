@@ -1,5 +1,5 @@
 {
-  "name": "react-native-frondend",
+  "name": "learn-word-game-frontend",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -11,6 +11,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
@@ -39,9 +40,11 @@
   },
   "devDependencies": {
     "@react-native-community/cli": "^20.1.2",
+    "@types/invariant": "^2.2.37",
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "expo-module-scripts": "^55.0.2",
     "typescript": "~5.9.2"
   },
   "private": true

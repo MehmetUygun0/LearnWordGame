@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "react-native-frondend",
-    "slug": "react-native-frondend",
+    "name": "LearnWordGame",
+    "slug": "learn-word-game",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "reactnativefrondend",
+    "icon": "./assets/images/learnwordgame-icon.png",
+    "scheme": "learnwordgame",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -30,12 +30,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/learnwordgame-splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#0B1020",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0B1020"
           }
         }
       ]
