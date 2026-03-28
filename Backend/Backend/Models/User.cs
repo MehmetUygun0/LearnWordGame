@@ -11,5 +11,8 @@ namespace Backend.Models
         public required string UserName { get; set; }
         [Required]
         public required byte[] Password { get; set; }
+
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
     }
 }

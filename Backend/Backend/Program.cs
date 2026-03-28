@@ -1,5 +1,8 @@
 using Backend.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +25,28 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
+
+var key = Encoding.UTF8.GetBytes("odD9*_22#!QzkfcPM23*$sdN3Qz!!%bB");
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = "myApp",
+        ValidAudience = "myAppUsers",
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
+
 
 
 // ... app builder'dan sonra
