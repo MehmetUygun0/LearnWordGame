@@ -46,13 +46,13 @@ namespace Backend.Controllers
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
 
-            byte[]? userPassword = user.Password;
 
-            if (userPassword is null)
+            if (user is null)
             {
                 return NotFound(new { message = "Kullanıcı bulunamadı." });
             }
-            else if (SHA256.VerifyPassword(password, userPassword))
+            byte[]? userPassword = user.Password;
+            if (SHA256.VerifyPassword(password, userPassword))
             {
                 var accessToken = JwtHelper.GenerateToken(username);
                 var refreshToken = JwtHelper.GenerateRefreshToken();
@@ -109,6 +109,11 @@ namespace Backend.Controllers
             var result = await Login("mehmet", "123");
             return Ok(result);
         }
+        [HttpGet("/ekle")]
+        public async Task<IActionResult> Ekle()
+        {
+            return await Register("mehmet", "123");
+        }
 
         // Bu endpoint'e erişmek için geçerli bir JWT token'ına sahip olmanız gerekir. TEST İÇİN KULLANILACAKTIR, GERÇEK PROJEDE KALMAYACAKTIR.
         [Authorize]
@@ -117,6 +122,6 @@ namespace Backend.Controllers
         {
             return Ok("Olduuu");
         }
-        
+
     }
 }
