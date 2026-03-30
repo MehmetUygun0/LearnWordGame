@@ -1,4 +1,5 @@
 using Backend.Data;
+using Backend.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -55,22 +56,19 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+builder.Services.AddSingleton<ResetCodeStore>(); // Depo
+builder.Services.AddHostedService<ResetCodeCleanerTask>(); // Temizlikçi Task
 
 
-
-
-// ... app builder'dan sonra
 var app = builder.Build();
 app.UseCors();
 
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
@@ -83,4 +81,4 @@ using (var scope = app.Services.CreateScope())
                            // db.Database.EnsureCreated(); // Migration kullanmýyorsan bunu kullanabilirsin
 }
 
-    app.Run();
+app.Run();
