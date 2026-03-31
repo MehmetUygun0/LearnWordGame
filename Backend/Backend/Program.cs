@@ -1,3 +1,4 @@
+using AspNetCoreRateLimit;
 using Backend.Data;
 using Backend.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -56,8 +57,50 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
+builder.Services.AddMemoryCache();
+
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.EnableEndpointRateLimiting = true;
+    options.StackBlockedRequests = false;
+    options.RealIpHeader = "X-Real-IP";
+    options.ClientIdHeader = "X-ClientId";
+    options.HttpStatusCode = 429;   
+
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "post:/api/user/reset-password",
+            Period = "30m", 
+            Limit = 10,     
+        },
+        new RateLimitRule
+        {
+            Endpoint = "post:/api/user/forgot-password",
+            Period = "30m", 
+            Limit = 10,     
+        },
+        new RateLimitRule
+        {
+            Endpoint = "post:/api/user/login",
+            Period = "30m",
+            Limit = 20,
+        },
+        new RateLimitRule
+        {
+            Endpoint = "post:/api/user/register",
+            Period = "30m",
+            Limit = 10,
+        }
+    };
+});
+
+builder.Services.AddInMemoryRateLimiting();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 builder.Services.AddSingleton<ResetCodeStore>(); // Depo
-builder.Services.AddHostedService<ResetCodeCleanerTask>(); // Temizlikçi Task
+builder.Services.AddHostedService<ResetCodeCleanerTask>();
 
 
 var app = builder.Build();
@@ -67,6 +110,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseIpRateLimiting();
 
 app.UseHttpsRedirection();
 

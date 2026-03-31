@@ -77,7 +77,7 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpPost("forgotpswd")]
+        [HttpPost("forgot-password")]
         public async Task<ActionResult> ForgotPassword(string usernameOrEmail)
         {
             User? user;
