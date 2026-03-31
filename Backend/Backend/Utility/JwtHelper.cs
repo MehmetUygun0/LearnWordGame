@@ -8,16 +8,17 @@
 
     public class JwtHelper
     {
-        private static string secretKey = "odD9*_22#!QzkfcPM23*$sdN3Qz!!%bB"; // bunu gizli tut!
+        private static string secretKey = "odD9*_22#!QzkfcPM23*$sdN3Qz!!%bB"; 
 
-        public static string GenerateToken(string username)
+        public static string GenerateToken(string userName,string userId)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.Name, username)
+                new Claim(ClaimTypes.Name, userName),
+                new Claim(ClaimTypes.NameIdentifier, userId)
             };
 
             var token = new JwtSecurityToken(
