@@ -92,11 +92,9 @@ namespace Backend.Controllers
             }
             if (user is null)
                 return NotFound(new { message = "Kullanıcı bulunamadı." });
+
             int resetCode = new Random().Next(100000, 999999);
-
-
             PasswordResetCode prc = new PasswordResetCode(user.Email, resetCode);
-
             await EmailService.SendResetCodeAsync("mehmetuygun1925@gmail.com", resetCode, prc);
             _resetCodeStore.AddCode(user.Email, resetCode);
             return Ok("Sıfırlama kodu mail adresine gönderildi.");
@@ -148,21 +146,20 @@ namespace Backend.Controllers
             });
         }
 
-        [Authorize]
-        [HttpGet("/profil-bilgim")]
-        public IActionResult GetProfile()
-        {
-            var username = User.Identity?.Name;
+        //[Authorize]
+        //[HttpGet("/profil-bilgim")]
+        //public IActionResult GetProfile()
+        //{
+        //    var username = User.Identity?.Name;
 
-            // 2. Token içindeki ID'yi al (Eğer ClaimTypes.NameIdentifier olarak eklediysen)
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return Ok(new
-            {
-                mesaj = $"Hoş geldin {username}!",
-                id = userId
-            });
-        }   
+        //    return Ok(new
+        //    {
+        //        mesaj = $"Hoş geldin {username}!",
+        //        id = userId
+        //    });
+        //}   
 
         [HttpGet("/deneme")]
         public async Task<IActionResult> Deneme()
@@ -170,7 +167,7 @@ namespace Backend.Controllers
             var testUser = new LoginDto
             {
                 UserName = "mehmet",
-                Password = "123",
+                Password = "12345",
             };
             var result = await Login(testUser);
 
@@ -189,6 +186,15 @@ namespace Backend.Controllers
             }
 
             return BadRequest("Login başarısız oldu, token yok!");
+
+            //var testUser = new ResetPasswordDto
+            //{
+            //    Email = "mehmetuygun1925@gmail.com",
+            //    Code = 323801,
+            //    NewPassword = "12345"
+            //};
+            //await ForgotPassword("mehmetuygun1925@gmail.com");
+            //return await ResetPassword(testUser);
         }
         [HttpGet("/ekle")]
         public async Task<IActionResult> Ekle()
