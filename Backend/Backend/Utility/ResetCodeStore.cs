@@ -14,8 +14,8 @@ namespace Backend.Utility
         public bool VerifyCode(string email,int code)
         {
            var item = Codes.LastOrDefault(x => x.Email == email && x.Code == code);
-           if(item==null) return false;
-           return true;
+           if(item!=null && item.ResetCodeExpiry<DateTime.Now) return true;
+           return false;
         }
         public void RemoveCode(string email)
         {
