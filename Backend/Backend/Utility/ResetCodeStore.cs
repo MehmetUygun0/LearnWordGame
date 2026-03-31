@@ -7,15 +7,24 @@ namespace Backend.Utility
         // Thread-safe bir liste (Aynı anda birden fazla kişi kod isteyebilir)
         readonly public List<PasswordResetCode> Codes = new List<PasswordResetCode>();
 
-        public void AddCode(int userId, int code)
+        public void AddCode(string email, int code)
         {
-            // Varsa eskisini sil, yenisini ekle
-            //Codes.RemoveAll(x => x.Email == email);
-            Codes.Add(new PasswordResetCode(userId,code) );
+            Codes.Add(new PasswordResetCode(email,code) );
         }
-        public void IsCodeValid(int userId, int code)
+        public bool VerifyCode(string email,int code)
         {
-            Codes.Any(x => x.UserId == userId && x.Code == code);
+           var item = Codes.LastOrDefault(x => x.Email == email && x.Code == code);
+           if(item==null) return false;
+           return true;
+        }
+        public void RemoveCode(string email)
+        {
+            var items = Codes.Where(x=>x.Email==email).ToList();
+            if(items.Count == 0) return;
+            foreach(var item in items)
+            {
+                Codes.Remove(item);
+            }
         }
     }
 }
