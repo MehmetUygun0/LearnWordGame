@@ -28,6 +28,7 @@ ASP.NET Core Web API projesi.
 - `Backend/Backend/Data/AppDbContext.cs`: veritabanı context'i
 - `Backend/Backend/Models/`: `User`, `Word`, `WordSample` modelleri
 - `Backend/Backend/Migrations/`: mevcut migration dosyaları
+- `Backend/Backend/Utility/`: SHA256,EmailService,ReserPasswordCode... gibi yardımcı servisler
 
 ### `react-native-frondend/`
 
@@ -39,9 +40,6 @@ Expo tabanlı mobil istemci.
 - `app/(tabs)/explore.tsx`: çoğunlukla Expo starter içeriği
 - `frontendDeneme.js`: bağımsız login denemesi
 
-### `Learn/` ve `ConsoleApp1/`
-
-Ana ürün akışının zorunlu parçası olmayan .NET console denemeleri.
 
 ## Kullanılan Teknolojiler
 
@@ -196,17 +194,15 @@ Frontend tarafında olması gereken ana ekranlar:
 Mevcut durumda:
 
 - `register` ve `login` var
-- Şifre SHA-256 ile hashleniyor
-- Şifremi unuttum yok
-- Token bazlı auth yok
-
-Yapılması gerekenler:
-
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/forgot-password`
 - `POST /api/auth/reset-password`
 - Giriş sonrası token veya session mantığı
+- Şifre SHA-256 ile hashleniyor
+
+Yapılması gerekenler:
+
 - Düz query string yerine JSON body kullanımı
 
 ### 2. Veri modelini büyütmek
@@ -216,6 +212,7 @@ Yapılması gerekenler:
 - `User`
 - `Word`
 - `WordSample`
+- `PasswordResetToken`
 
 Eklenmesi gereken modeller:
 
@@ -225,7 +222,6 @@ Eklenmesi gereken modeller:
 - `QuizQuestion`
 - `QuizAnswer`
 - `DailyPlan`
-- `PasswordResetToken`
 
 Önerilen ek tablo mantığı:
 
