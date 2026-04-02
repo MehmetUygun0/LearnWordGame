@@ -49,6 +49,7 @@ export default function HomeScreen() {
     }
 
     try {
+
       // Backend terminalinde gördüğün C# portu (5184)
       const response = await fetch('https://localhost:7047', {
         method: 'POST',
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   titleContainer: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20 },
   stepContainer: { gap: 8, marginBottom: 20, padding: 16 },
   input: {
-    height: 40,
+    height: 41,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
