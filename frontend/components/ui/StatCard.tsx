@@ -39,16 +39,16 @@ const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(110, 168, 254, 0.16)',
+    backgroundColor: palette.primarySoft,
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
   },
   badgeSecondary: {
-    backgroundColor: 'rgba(94, 234, 212, 0.16)',
+    backgroundColor: palette.secondarySoft,
   },
   badgeText: {
     ...typography.caption,
-    color: palette.textMuted,
+    color: palette.text,
   },
   value: {
     ...typography.title,

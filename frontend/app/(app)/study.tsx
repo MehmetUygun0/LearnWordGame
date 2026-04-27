@@ -1,62 +1,53 @@
 // @ts-nocheck
-import React from 'react';
+import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AppInput } from '@/components/ui/AppInput';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
-import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 export default function StudyScreen() {
+  const [answer, setAnswer] = useState('');
+
   return (
     <ScreenContainer scrollable>
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Study Session</Text>
-        <Text style={styles.title}>Soru karti placeholder</Text>
-      </View>
+      <SectionHeader
+        eyebrow="Çalışma oturumu"
+        title="Soru kartı akışını burada işle."
+        description="Bu ekran, 6 tekrar algoritmasının ana yüzeyi olacak. Şimdilik odaklı bir placeholder düzeni hazır."
+      />
 
-      <View style={[styles.card, shadows.soft]}>
+      <SurfaceCard>
         <View style={styles.badgeRow}>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>Sira 4 / 20</Text>
+            <Text style={styles.badgeText}>Sıra 4 / 20</Text>
           </View>
           <Ionicons name="volume-high-outline" size={20} color={palette.textMuted} />
         </View>
         <Text style={styles.word}>abandon</Text>
-        <Text style={styles.hint}>Bu alanda gorsel, ornek cumle ve tekrar asamasi bilgisi gosterilecek.</Text>
-        <AppInput label="Cevabin" placeholder="Turkce karsiligini yaz" />
-        <AppButton label="Cevabi Gonder" />
-      </View>
+        <Text style={styles.hint}>Bu alanda görsel, örnek cümle ve tekrar aşaması bilgisi gösterilecek.</Text>
+        <AppInput
+          label="Cevabın"
+          placeholder="Türkçe karşılığını yaz"
+          value={answer}
+          onChangeText={setAnswer}
+        />
+        <AppButton label="Cevabı Gönder" />
+      </SurfaceCard>
 
-      <View style={[styles.progressCard, shadows.soft]}>
-        <Text style={styles.progressTitle}>Oturum akisi</Text>
-        <Text style={styles.progressText}>Yeni kelime, tekrar kelimesi ve dogru-yanlis feedback bloklari Sprint 2&apos;de bu ekranin icine gelecek.</Text>
-      </View>
+      <SurfaceCard muted style={styles.progressCard}>
+        <Text style={styles.progressTitle}>Oturum akışı</Text>
+        <Text style={styles.progressText}>Yeni kelime, tekrar kelimesi ve doğru-yanlış geri bildirim blokları sonraki sprintte bu ekranın içine gelecek.</Text>
+      </SurfaceCard>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    ...typography.label,
-    color: palette.secondary,
-  },
-  title: {
-    ...typography.display,
-    color: palette.text,
-  },
-  card: {
-    borderRadius: radius.lg,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
   badgeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -64,7 +55,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(110, 168, 254, 0.16)',
+    backgroundColor: palette.primarySoft,
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
   },
@@ -82,11 +73,6 @@ const styles = StyleSheet.create({
     color: palette.textMuted,
   },
   progressCard: {
-    borderRadius: radius.lg,
-    backgroundColor: palette.cardMuted,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: spacing.lg,
     gap: spacing.sm,
   },
   progressTitle: {

@@ -14,6 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { navigationTheme, palette } from '@/constants/theme';
+import { AuthProvider } from '@/lib/auth-context';
 
 // Splash screen'i fontlar yüklenene kadar açık tutuyoruz.
 SplashScreen.preventAutoHideAsync();
@@ -38,14 +39,16 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={navigationTheme}>
-      <Stack>
-        {/* Giriş öncesi ekranlar */}
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        {/* Uygulama içi ana akış */}
-        <Stack.Screen name="(app)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="light" backgroundColor={palette.background} />
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider value={navigationTheme}>
+        <Stack>
+          {/* Giriş öncesi ekranlar */}
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          {/* Uygulama içi ana akış */}
+          <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style="light" backgroundColor={palette.background} />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
 import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
 
@@ -8,6 +8,9 @@ type AppButtonProps = {
   label: string;
   onPress?: () => void;
   variant?: 'primary' | 'secondary' | 'ghost';
+  disabled?: boolean;
+  loading?: boolean;
+  fullWidth?: boolean;
 };
 
 // Projedeki tüm ana aksiyonlar aynı buton bileşeni üzerinden geçsin diye ortaklaştırıldı.
@@ -15,18 +18,28 @@ export function AppButton({
   label,
   onPress,
   variant = 'primary',
+  disabled = false,
+  loading = false,
+  fullWidth = true,
 }: AppButtonProps) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled || loading}
       style={({ hovered, pressed }) => [
         styles.base,
+        fullWidth && styles.fullWidth,
         variantStyles[variant],
+        (disabled || loading) && styles.disabled,
         hovered && styles.hovered,
         pressed && styles.pressed,
         variant === 'primary' && shadows.glow,
       ]}>
-      <Text style={[styles.label, labelStyles[variant]]}>{label}</Text>
+      {loading ? (
+        <ActivityIndicator color={labelStyles[variant].color} />
+      ) : (
+        <Text style={[styles.label, labelStyles[variant]]}>{label}</Text>
+      )}
     </Pressable>
   );
 }
@@ -40,6 +53,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
+  fullWidth: {
+    width: '100%',
+  },
   label: {
     ...typography.button,
   },
@@ -50,13 +66,16 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
     opacity: 0.92,
   },
+  disabled: {
+    opacity: 0.55,
+  },
 });
 
 // Variant bazlı görünüm ayrımı burada; ekranlar içinde renk/stil tekrarı yapmıyoruz.
 const variantStyles = StyleSheet.create({
   primary: {
     backgroundColor: palette.primary,
-    borderColor: '#8AB7FF',
+    borderColor: palette.primaryStrong,
   },
   secondary: {
     backgroundColor: palette.cardMuted,
@@ -70,7 +89,7 @@ const variantStyles = StyleSheet.create({
 
 const labelStyles = StyleSheet.create({
   primary: {
-    color: '#08111F',
+    color: palette.text,
   },
   secondary: {
     color: palette.text,

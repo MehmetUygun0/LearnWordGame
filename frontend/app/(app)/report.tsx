@@ -3,23 +3,26 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatCard } from '@/components/ui/StatCard';
-import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 export default function ReportScreen() {
   return (
     <ScreenContainer scrollable>
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Report</Text>
-        <Text style={styles.title}>İlerlemenene göz at.</Text>
-      </View>
+      <SectionHeader
+        eyebrow="Rapor"
+        title="İlerlemenin genel görünümüne göz at."
+        description="Gerçek istatistikler bağlandığında bu ekran öğrenme performansını anlamak için ana merkez olacak."
+      />
 
       <View style={styles.statsRow}>
-        <StatCard eyebrow="Ogrenilen" value="42 kelime" />
+        <StatCard eyebrow="Öğrenilen" value="42 kelime" />
         <StatCard eyebrow="Tamamlanan seri" value="6 tekrar" accent="secondary" />
       </View>
 
-      <View style={[styles.chartCard, shadows.soft]}>
+      <SurfaceCard style={styles.chartCard}>
         <Text style={styles.sectionTitle}>Haftalık trend</Text>
         <View style={styles.barsRow}>
           {[44, 68, 52, 80, 64, 92, 70].map((height, index) => (
@@ -29,33 +32,17 @@ export default function ReportScreen() {
           ))}
         </View>
         <Text style={styles.caption}>Gerçek istatistikler backend rapor endpoint&apos;lerinden beslenecek.</Text>
-      </View>
+      </SurfaceCard>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    ...typography.label,
-    color: palette.secondary,
-  },
-  title: {
-    ...typography.display,
-    color: palette.text,
-  },
   statsRow: {
     flexDirection: 'row',
     gap: spacing.md,
   },
   chartCard: {
-    borderRadius: radius.lg,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: spacing.lg,
     gap: spacing.lg,
   },
   sectionTitle: {

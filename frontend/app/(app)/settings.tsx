@@ -1,66 +1,60 @@
 // @ts-nocheck
 import React from 'react';
+import * as ExpoRouter from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
-import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { useAuth } from '@/lib/auth-context';
+import { palette, spacing, typography } from '@/constants/theme';
 
 export default function SettingsScreen() {
+  const { router } = ExpoRouter;
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/(auth)/login');
+  };
+
   return (
     <ScreenContainer scrollable>
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Settings</Text>
-        <Text style={styles.title}>Gunun ritmini ve tercihlerini ayarla.</Text>
-      </View>
+      <SectionHeader
+        eyebrow="Ayarlar"
+        title="Günün ritmini ve tercihlerini ayarla."
+        description="Bu ekran günlük yeni kelime sayısı ve soru limitleri için temel yüzeyi hazırlıyor."
+      />
 
-      <View style={[styles.preferenceCard, shadows.soft]}>
+      <SurfaceCard>
         <View style={styles.preferenceRow}>
           <View>
-            <Text style={styles.preferenceTitle}>Gunluk yeni kelime</Text>
-            <Text style={styles.preferenceText}>Su an 6 kelime placeholder olarak ayarli.</Text>
+            <Text style={styles.preferenceTitle}>Günlük yeni kelime</Text>
+            <Text style={styles.preferenceText}>Şu an 6 kelime placeholder olarak ayarlı.</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />
         </View>
         <View style={styles.preferenceRow}>
           <View>
-            <Text style={styles.preferenceTitle}>Gunluk tekrar limiti</Text>
-            <Text style={styles.preferenceText}>Bugun icin 20 soru planlaniyor.</Text>
+            <Text style={styles.preferenceTitle}>Günlük tekrar limiti</Text>
+            <Text style={styles.preferenceText}>Bugün için 20 soru planlanıyor.</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />
         </View>
-      </View>
+      </SurfaceCard>
 
-      <View style={[styles.preferenceCard, shadows.soft]}>
+      <SurfaceCard muted>
         <Text style={styles.preferenceTitle}>Hesap</Text>
-        <Text style={styles.preferenceText}>Cikis, profil ve bildirim ayarlari auth/profile sprintlerinde netlesecek.</Text>
-        <AppButton label="Cikis" variant="ghost" />
-      </View>
+        <Text style={styles.preferenceText}>Çıkış, profil ve bildirim ayarları auth ve profil sprintlerinde netleşecek.</Text>
+        <AppButton label="Çıkış" variant="ghost" onPress={handleLogout} />
+      </SurfaceCard>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    ...typography.label,
-    color: palette.secondary,
-  },
-  title: {
-    ...typography.display,
-    color: palette.text,
-  },
-  preferenceCard: {
-    borderRadius: radius.lg,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
   preferenceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

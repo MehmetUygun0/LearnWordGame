@@ -1,33 +1,74 @@
 // @ts-nocheck
-import React from 'react';
+import React, { useState } from 'react';
 import * as ExpoRouter from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AppInput } from '@/components/ui/AppInput';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
-import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { palette, typography } from '@/constants/theme';
+import { forgotPasswordRequest } from '@/services/auth';
 
 export default function ForgotPasswordScreen() {
   const { router } = ExpoRouter;
+  const [identity, setIdentity] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleForgotPassword = async () => {
+    const trimmedIdentity = identity.trim();
+
+    if (!trimmedIdentity) {
+      setError('E-posta veya kullanıcı adı zorunlu.');
+      return;
+    }
+
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      const result = await forgotPasswordRequest({ identity: trimmedIdentity });
+      Alert.alert('Bilgi', result.message);
+      setIdentity('');
+    } catch (requestError) {
+      Alert.alert(
+        'İstek başarısız',
+        requestError instanceof Error
+          ? requestError.message
+          : 'Şifre sıfırlama isteği gönderilemedi.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <ScreenContainer contentStyle={styles.content}>
-      <View style={styles.hero}>
-        <Text style={styles.kicker}>Erisim yenile</Text>
-        <Text style={styles.title}>Sifre sifirlama akisinin placeholder ekrani.</Text>
-        <Text style={styles.description}>
-          Gercek e-posta veya kullanici adi tabanli reset mantigi auth sprintinde baglanacak.
-        </Text>
-      </View>
+      <SectionHeader
+        eyebrow="Erişimi yenile"
+        title="Şifre sıfırlama akışını burada başlat."
+        description="Bu ekran gerçek forgot-password endpoint'i geldiğinde doğrudan backend'e bağlanacak."
+      />
 
-      <View style={[styles.card, shadows.soft]}>
-        <AppInput label="E-posta veya kullanici adi" placeholder="mail@ornek.com" />
-        <AppButton label="Sifirla linki gonder" />
-      </View>
+      <SurfaceCard>
+        <AppInput
+          label="E-posta veya kullanıcı adı"
+          placeholder="mail@ornek.com"
+          value={identity}
+          onChangeText={setIdentity}
+          error={error}
+        />
+        <AppButton
+          label="Sıfırlama bağlantısı gönder"
+          onPress={handleForgotPassword}
+          loading={isSubmitting}
+        />
+      </SurfaceCard>
 
       <Pressable onPress={() => router.push('/(auth)/login')}>
-        <Text style={styles.link}>Giris ekranina don</Text>
+        <Text style={styles.link}>Giriş ekranına dön</Text>
       </Pressable>
     </ScreenContainer>
   );
@@ -36,29 +77,6 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   content: {
     justifyContent: 'center',
-  },
-  hero: {
-    gap: spacing.sm,
-  },
-  kicker: {
-    ...typography.label,
-    color: palette.secondary,
-  },
-  title: {
-    ...typography.display,
-    color: palette.text,
-  },
-  description: {
-    ...typography.body,
-    color: palette.textMuted,
-  },
-  card: {
-    backgroundColor: palette.card,
-    borderColor: palette.border,
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.md,
   },
   link: {
     ...typography.label,

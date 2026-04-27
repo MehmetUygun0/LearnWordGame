@@ -1,30 +1,45 @@
 // @ts-nocheck
 import React from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardTypeOptions, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 type AppInputProps = {
   label: string;
-  placeholder: string;
+  value?: string;
+  onChangeText?: (text: string) => void;
+  placeholder?: string;
   secureTextEntry?: boolean;
+  keyboardType?: KeyboardTypeOptions;
+  error?: string;
+  helperText?: string;
 };
 
 // Form alanları ileride state/validation ile genişleyecek; görsel temel burada sabitleniyor.
 export function AppInput({
   label,
-  placeholder,
+  value = '',
+  onChangeText,
+  placeholder = '',
   secureTextEntry = false,
+  keyboardType = 'default',
+  error,
+  helperText,
 }: AppInputProps) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        value={value}
+        onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={palette.textMuted}
         secureTextEntry={secureTextEntry}
-        style={styles.input}
+        keyboardType={keyboardType}
+        style={[styles.input, error && styles.inputError]}
       />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {!error && helperText ? <Text style={styles.helperText}>{helperText}</Text> : null}
     </View>
   );
 }
@@ -46,5 +61,16 @@ const styles = StyleSheet.create({
     backgroundColor: palette.cardMuted,
     borderWidth: 1,
     borderColor: palette.border,
+  },
+  inputError: {
+    borderColor: palette.danger,
+  },
+  helperText: {
+    ...typography.caption,
+    color: palette.textFaint,
+  },
+  errorText: {
+    ...typography.caption,
+    color: palette.danger,
   },
 });

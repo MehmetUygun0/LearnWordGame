@@ -2,18 +2,22 @@
 import { DarkTheme, Theme } from '@react-navigation/native';
 import { TextStyle, ViewStyle } from 'react-native';
 
-// Projedeki tüm ekranlar koyu arka plan + iki vurgu rengi üstüne kuruldu.
+// Projedeki tüm ekranlar koyu gri zemin ve bordo vurgu ailesi üzerine kuruldu.
 export const palette = {
-  background: '#0B1020',
-  backgroundElevated: '#121933',
-  card: '#151E3D',
-  cardMuted: '#1A2448',
-  border: '#2A3564',
-  primary: '#6EA8FE',
-  secondary: '#5EEAD4',
-  text: '#F4F7FF',
-  textMuted: '#98A6D4',
-  danger: '#FF7A90',
+  background: '#241F24',
+  backgroundElevated: '#2D262C',
+  card: '#373038',
+  cardMuted: '#433A43',
+  border: '#5B4E58',
+  primary: '#65142C',
+  primaryStrong: '#4E0E21',
+  primarySoft: 'rgba(101, 20, 44, 0.18)',
+  secondary: '#8F5566',
+  secondarySoft: 'rgba(143, 85, 102, 0.18)',
+  text: '#F4EFF2',
+  textMuted: '#C7BAC1',
+  textFaint: '#9C8F96',
+  danger: '#E56B86',
   success: '#4ADE80',
   warning: '#FBBF24',
 };
@@ -77,17 +81,17 @@ export const typography = {
 // Kart ve butonlarda tekrar kullanılacak gölge preset'leri.
 export const shadows = {
   soft: {
-    shadowColor: '#000814',
+    shadowColor: '#050507',
     shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.28,
-    shadowRadius: 24,
+    shadowOpacity: 0.26,
+    shadowRadius: 22,
     elevation: 8,
   } satisfies ViewStyle,
   glow: {
     shadowColor: palette.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.24,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.26,
+    shadowRadius: 18,
     elevation: 6,
   } satisfies ViewStyle,
 };

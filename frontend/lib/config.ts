@@ -7,28 +7,13 @@ const config = {
   API_URL: DEV_MODE ? `http://${DEV_IP}:5001` : 'https://production-api.com',
   ENDPOINTS: {
     AUTH: {
-      REGISTER: '/register',
-      LOGIN: '/login',
-      DELETE: '/api/auth/delete',
+      REGISTER: '/api/auth/register',
+      LOGIN: '/api/auth/login',
+      FORGOT_PASSWORD: '/api/auth/forgot-password',
+      ME: '/api/auth/me',
     },
-    USER: {
-      INFO: '/api/user/info',
-      SAVE_PUSH_TOKEN: '/api/user/save-push-token',
-    },
-    INFO: {
-      DASHBOARD: '/api/info/dashboard',
-    },
-    STUDY: {
-      TODAY: '/api/study/today',
-      SUBMIT_ANSWER: '/api/study/submit-answer',
-    },
-    REPORT: {
-      PROGRESS: '/api/reports/progress',
-    },
-    CHAT: {
-      CONVERSATIONS: '/api/chat/conversations',
-      DETAIL: '/api/chat/detail',
-      SEND: '/api/chat/send',
+    WORDS: {
+      LIST: '/api/words',
     },
   },
   // Şimdilik socket akışı aktif değil ama ileride canlı özellikler için hazır tutuluyor.

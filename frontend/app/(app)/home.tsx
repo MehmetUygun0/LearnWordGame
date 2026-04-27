@@ -6,47 +6,53 @@ import * as ExpoRouter from 'expo-router';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatCard } from '@/components/ui/StatCard';
-import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { useAuth } from '@/lib/auth-context';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 export default function HomeScreen() {
   const { router } = ExpoRouter;
+  const { user } = useAuth();
+  const initials = user?.userName?.slice(0, 2).toUpperCase() || 'OU';
 
   return (
     <ScreenContainer scrollable>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.eyebrow}>Dashboard</Text>
-          <Text style={styles.title}>Bugunku tempoyu buradan yonet.</Text>
-        </View>
+        <SectionHeader
+          eyebrow="Ana ekran"
+          title={`Hoş geldin${user?.userName ? `, ${user.userName}` : ''}.`}
+          description="Günlük tekrar, yeni kart ve çalışma akışı bu merkezden başlayacak."
+        />
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>OU</Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
       </View>
 
       <View style={styles.statsRow}>
-        <StatCard eyebrow="Bugunku tekrar" value="18 kelime" />
+        <StatCard eyebrow="Bugünkü tekrar" value="18 kelime" />
         <StatCard eyebrow="Yeni kart" value="6 kelime" accent="secondary" />
       </View>
 
-      <View style={[styles.featureCard, shadows.soft]}>
+      <SurfaceCard>
         <View style={styles.featureIcon}>
           <Ionicons name="sparkles-outline" size={22} color={palette.secondary} />
         </View>
-        <Text style={styles.featureTitle}>Sprint 1 hedefi</Text>
+        <Text style={styles.featureTitle}>Kelime havuzu</Text>
         <Text style={styles.featureText}>
-          Bu ekran artik karanlik tema, rounded kartlar ve tek tasarim diliyle home hissi veriyor.
+          Veritabanındaki kelimeler seviye bazlı olarak listelenecek. Buradan doğrudan kelime havuzuna geçebilirsin.
         </Text>
-        <AppButton label="Study ekranina gec" onPress={() => router.push('/(app)/study')} />
-      </View>
+        <AppButton label="Kelime havuzunu aç" onPress={() => router.push('/(app)/words')} />
+      </SurfaceCard>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Hizli ozet</Text>
-        <View style={[styles.summaryCard, shadows.soft]}>
-          <Text style={styles.summaryLabel}>Basari orani</Text>
+        <Text style={styles.sectionTitle}>Hızlı özet</Text>
+        <SurfaceCard style={styles.summaryCard} muted>
+          <Text style={styles.summaryLabel}>Başarı oranı</Text>
           <Text style={styles.summaryValue}>%72</Text>
-          <Text style={styles.summaryText}>Gercek veriler report sprintinde backend tarafindan doldurulacak.</Text>
-        </View>
+          <Text style={styles.summaryText}>Gerçek veriler rapor sprintinde backend tarafından doldurulacak.</Text>
+        </SurfaceCard>
       </View>
     </ScreenContainer>
   );
@@ -56,23 +62,14 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
-  },
-  eyebrow: {
-    ...typography.label,
-    color: palette.secondary,
-  },
-  title: {
-    ...typography.display,
-    color: palette.text,
-    marginTop: spacing.xs,
   },
   avatar: {
     width: 52,
     height: 52,
     borderRadius: radius.pill,
-    backgroundColor: palette.cardMuted,
+    backgroundColor: palette.primarySoft,
     borderWidth: 1,
     borderColor: palette.border,
     alignItems: 'center',
@@ -86,19 +83,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  featureCard: {
-    borderRadius: radius.lg,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
   featureIcon: {
     width: 44,
     height: 44,
     borderRadius: radius.md,
-    backgroundColor: 'rgba(94, 234, 212, 0.14)',
+    backgroundColor: palette.secondarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -118,11 +107,6 @@ const styles = StyleSheet.create({
     color: palette.text,
   },
   summaryCard: {
-    borderRadius: radius.lg,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: spacing.lg,
     gap: spacing.xs,
   },
   summaryLabel: {
