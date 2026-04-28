@@ -13,7 +13,9 @@ namespace Backend.Models
         [Required]
         [StringLength(100)]
         public required string TurWordName { get; set; }
-        public string? Picture { get; set; } 
+        public string? Picture { get; set; }
+        [MaxLength(2)]
+        public string Level { get; set; } = null!;
         [NotMapped]
         public string PictureUrl => $"/uploads/images/{Picture}";
         public virtual ICollection<WordSample> WordSamples { get; set; }
