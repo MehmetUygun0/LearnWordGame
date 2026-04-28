@@ -45,14 +45,6 @@ namespace Backend.Controllers
             };
             var username = HttpContext.User.Identity?.Name;
 
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            //    return Ok(new
-            //    {
-            //        mesaj = $"Hoş geldin {username}!",
-            //        id = userId
-            //    });
-
             _context.UserWords.Add(word);
             await _context.SaveChangesAsync();
 

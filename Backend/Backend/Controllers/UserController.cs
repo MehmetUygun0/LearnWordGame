@@ -111,7 +111,6 @@ namespace Backend.Controllers
             {
                 return BadRequest("Girdiğin kod hatalı veya süresi dolmuş.");
             }
-            // 3. Eğer buraya geldiyse kod DOĞRUDUR. Şimdi DB'den kullanıcıyı bul
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user == null) return NotFound("Kullanıcı veri tabanında bulunamadı.");
 
@@ -148,20 +147,20 @@ namespace Backend.Controllers
             });
         }
 
-        //[Authorize]
-        //[HttpGet("/profil-bilgim")]
-        //public IActionResult GetProfile()
-        //{
-        //    var username = User.Identity?.Name;
+        [Authorize]
+        [HttpGet("/profil-bilgim")]
+        public IActionResult GetProfile()
+        {
+            var username = User.Identity?.Name;
 
-        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        //    return Ok(new
-        //    {
-        //        mesaj = $"Hoş geldin {username}!",
-        //        id = userId
-        //    });
-        //}   
+            return Ok(new
+            {
+                mesaj = $"Hoş geldin {username}!",
+                id = userId
+            });
+        }
 
         [HttpGet("/deneme")]
         public async Task<IActionResult> Deneme()
@@ -188,15 +187,6 @@ namespace Backend.Controllers
             }
 
             return BadRequest("Login başarısız oldu, token yok!");
-
-            //var testUser = new ResetPasswordDto
-            //{
-            //    Email = "mehmetuygun1925@gmail.com",
-            //    Code = 323801,
-            //    NewPassword = "12345"
-            //};
-            //await ForgotPassword("mehmetuygun1925@gmail.com");
-            //return await ResetPassword(testUser);
         }
         [HttpGet("/test2")]
         public async Task<IActionResult> sifreSifirla()
