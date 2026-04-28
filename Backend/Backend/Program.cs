@@ -101,6 +101,7 @@ builder.Services.AddInMemoryRateLimiting();
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 builder.Services.AddSingleton<ResetCodeStore>(); // Depo
 builder.Services.AddHostedService<ResetCodeCleanerTask>();
+builder.Services.AddScoped<EmailService>();
 
 
 var app = builder.Build();

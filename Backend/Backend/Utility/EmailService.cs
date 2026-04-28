@@ -4,20 +4,32 @@ using System.Net.Mail;
 
 namespace Backend.Utility
 {
-    static public class EmailService
+    public class EmailService
     {
-        static public async Task SendResetCodeAsync(string email, int code, PasswordResetCode prc)
+        private readonly IConfiguration _configuration;
+
+        public EmailService(IConfiguration configuration)
         {
-            var smtpClient = new SmtpClient("smtp.gmail.com")
+            _configuration = configuration;
+        }
+        public async Task SendResetCodeAsync(string email, int code, PasswordResetCode prc)
+        {
+
+            var referanceEmail = _configuration["Email:Address"];
+            var password = _configuration["Email:Password"];
+            var host = _configuration["Email:Host"];
+            var port = _configuration.GetValue<int>("Email:Port");
+
+            var smtpClient = new SmtpClient(host)
             {
-                Port = 587,
-                Credentials = new NetworkCredential("hoppacik1925@gmail.com", "lfslugdvdgasmxjd"),
+                Port = port,
+                Credentials = new NetworkCredential(referanceEmail, password),
                 EnableSsl = true,
             };
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress("hoppacik1925@gmail.com"),
+                From = new MailAddress("LearnWordGame<learn@example.com>"),
                 Subject = "Şifre Sıfırlama Kodu",
                 Body = $"Şifreni sıfırlamak için kodun: {code}. Bu kod 10 dakika geçerlidir.",
                 IsBodyHtml = true,
@@ -25,8 +37,6 @@ namespace Backend.Utility
             mailMessage.To.Add(email);
 
             await smtpClient.SendMailAsync(mailMessage);
-
         }
-        
     }
 }

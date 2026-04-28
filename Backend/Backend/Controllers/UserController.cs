@@ -20,11 +20,13 @@ namespace Backend.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ResetCodeStore _resetCodeStore;
+        private readonly EmailService _emailService;
 
-        public UserController(AppDbContext appContext, ResetCodeStore resetCodeStore)
+        public UserController(AppDbContext appContext, ResetCodeStore resetCodeStore, EmailService emailService)
         {
             _context = appContext;
             _resetCodeStore = resetCodeStore;
+            _emailService = emailService;
         }
         [HttpPost("register")]
         public async Task<ActionResult> Register([FromBody] RegisterDto dto)
@@ -57,7 +59,7 @@ namespace Backend.Controllers
             byte[]? userPassword = user.Password;
             if (SHA256.VerifyPassword(dto.Password, userPassword))
             {
-                var accessToken = JwtHelper.GenerateToken(dto.UserName,user.Id.ToString());
+                var accessToken = JwtHelper.GenerateToken(dto.UserName, user.Id.ToString());
                 var refreshToken = JwtHelper.GenerateRefreshToken();
 
                 user.RefreshToken = refreshToken;
@@ -95,7 +97,7 @@ namespace Backend.Controllers
 
             int resetCode = new Random().Next(100000, 999999);
             PasswordResetCode prc = new PasswordResetCode(user.Email, resetCode);
-            await EmailService.SendResetCodeAsync("mehmetuygun1925@gmail.com", resetCode, prc);
+            await _emailService.SendResetCodeAsync(user.Email, resetCode, prc);
             _resetCodeStore.AddCode(user.Email, resetCode);
             return Ok("Sıfırlama kodu mail adresine gönderildi.");
         }
@@ -120,7 +122,7 @@ namespace Backend.Controllers
             return Ok("Şifren başarıyla sıfırlandı. Yeni şifrenle giriş yapabilirsin!");
         }
         [HttpPost("refresh")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto) 
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
         {
             if (dto == null || string.IsNullOrEmpty(dto.RefreshToken))
                 return BadRequest("Refresh token boş olamaz.");
@@ -131,7 +133,7 @@ namespace Backend.Controllers
             if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
                 return Unauthorized("Refresh token geçersiz veya süresi dolmuş.");
 
-            var newAccessToken = JwtHelper.GenerateToken(user.UserName,user.Id.ToString());
+            var newAccessToken = JwtHelper.GenerateToken(user.UserName, user.Id.ToString());
             var newRefreshToken = JwtHelper.GenerateRefreshToken();
 
             user.RefreshToken = newRefreshToken;
@@ -195,6 +197,18 @@ namespace Backend.Controllers
             //};
             //await ForgotPassword("mehmetuygun1925@gmail.com");
             //return await ResetPassword(testUser);
+        }
+        [HttpGet("/test2")]
+        public async Task<IActionResult> sifreSifirla()
+        {
+            var testUser = new ResetPasswordDto
+            {
+                Email = "mehmetuygun1925@gmail.com",
+                Code = 323801,
+                NewPassword = "12345"
+            };
+            Console.WriteLine(await ForgotPassword("mehmetuygun1925@gmail.com"));
+            return await ResetPassword(testUser);
         }
         [HttpGet("/ekle")]
         public async Task<IActionResult> Ekle()
