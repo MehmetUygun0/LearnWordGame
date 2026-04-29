@@ -1,6 +1,13 @@
-version: "3.9"
-
 services:
+  api:
+    build: ./backend
+    ports:
+      - "5000:8080"
+    depends_on:
+      - db
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=testdb;User=sa;Password=Your_password123;
+
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: mssql
@@ -9,17 +16,8 @@ services:
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Your_password123' -Q 'SELECT 1' -C",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-  #     volumes:
-  #       - sqlvolume:/var/opt/mssql
+    volumes:
+      - sqlvolume:/var/opt/mssql
 
   # volumes:
   #   sqlvolume:
