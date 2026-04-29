@@ -1,16 +1,12 @@
 services:
   api:
-    build:
-      context: ./Backend
-      dockerfile: Dockerfile
+    build: ./backend
     ports:
-      - "5001:8080"
+      - "5000:8080"
     depends_on:
       - db
     environment:
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Server=db;Database=Project;User Id=sa;Password=Your_password123;TrustServerCertificate=True;MultipleActiveResultSets=true
-    restart: unless-stopped
+      - ConnectionStrings__DefaultConnection=Server=db;Database=testdb;User=sa;Password=Your_password123;
 
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -22,7 +18,16 @@ services:
       - "1433:1433"
     volumes:
       - sqlvolume:/var/opt/mssql
-    restart: unless-stopped
 
-volumes:
-  sqlvolume:
+  # volumes:
+  #   sqlvolume:
+  backend:
+    build: ./backend/backend/
+    ports:
+      - "5000:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      # - dbs
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=testdb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;Encrypt=False;

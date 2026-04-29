@@ -10,14 +10,20 @@ namespace Backend.Data
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<User>()
                 .Property(u => u.UserName)
                 .UseCollation("Turkish_CS_AS");
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+            base.OnModelCreating(modelBuilder);
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Word> Words { get; set; }
-        public DbSet<WordSample> WordSamples { get; set; }
+        public DbSet<UserWord> UserWords { get; set; }
+        public DbSet<UserWordSample> UserWordSamples { get; set; }
+
+
 
     }
 }
