@@ -1,122 +1,193 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  View, Text, TextInput, TouchableOpacity, Image, 
+  ScrollView, StyleSheet, Alert, ActivityIndicator, Platform 
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-const API_BASE = 'https://localhost:7047/api/words'; //  backend portu
+// Backend bağlantı ayarı (Android emülatör için 10.0.2.2, iOS/Web için localhost)
+const API_URL = 'http://localhost:5184';
 
 export default function LearnWordApp() {
-  // Story 2 State'leri
-  const [engWord, setEngWord] = useState('');
-  const [turWord, setTurWord] = useState('');
-  const [samples, setSamples] = useState(['']); // Birden çok örnek cümle
-  const [image, setImage] = useState(null);
+  // --- STATES ---
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState({ username: '', password: '' });
 
-  // Story 3 State'leri
-  const [quizWord, setQuizWord] = useState(null);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [wordData, setWordData] = useState({
+    ing: '',
+    tr: '',
+    samples: [''],
+    image: null
+  });
+
+  const [quiz, setQuiz] = useState({ question: null, showAnswer: false });
+
+  // --- STORY 1: GİRİŞ / KAYIT ---
+  const handleLogin = async () => {
+    if (!user.username || !user.password) {
+      return Alert.alert("Uyarı", "Lütfen tüm alanları doldurun.");
+    }
+
+    setLoading(true);
+    try {
+      
+        const response = await fetch(`${API_URL}/user/register?username=${user.username}&password=${user.password}`, {
+  method: 'POST'
+});
+        const res = await fetch(`${API_URL}/user/login?username=${user.username}&password=${user.password}`, { 
+    method: 'GET' 
+  });
+      if (response.ok) {
+        setIsLoggedIn(true);
+        Alert.alert("Başarılı", `Hoş geldin, ${user.username}!`);
+      } else {
+        Alert.alert("Hata", "Kullanıcı adı veya şifre yanlış.");
+      }
+    } catch (error) {
+      Alert.alert("Bağlantı Hatası", "Backend sunucusuna ulaşılamıyor. Sunucunun açık olduğundan emin olun.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- STORY 2: KELİME EKLEME ---
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
-      quality: 1,
+      aspect: [4, 3],
+      quality: 0.6,
     });
-    if (!result.canceled) setImage(result.assets[0].uri);
+
+    if (!result.canceled) {
+      setWordData({ ...wordData, image: result.assets[0].uri });
+    }
   };
 
-  const saveWord = async () => {
+  const handleSaveWord = async () => {
+    if (!wordData.ing || !wordData.tr) return Alert.alert("Hata", "Kelime alanları boş olamaz.");
+
     const formData = new FormData();
-    formData.append('EngWordName', engWord);
-    formData.append('TurWordName', turWord);
-    formData.append('Samples', JSON.stringify(samples));
-    if (image) {
-      formData.append('Picture', { uri: image, name: 'word.jpg', type: 'image/jpeg' } );
+    formData.append('EngWordName', wordData.ing);
+    formData.append('TurWordName', wordData.tr);
+    formData.append('Samples', JSON.stringify(wordData.samples.filter(s => s.trim() !== '')));
+    
+    if (wordData.image) {
+      formData.append('Picture', {
+        uri: wordData.image,
+        name: 'upload.jpg',
+        type: 'image/jpeg',
+      });
     }
 
+    setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/save`, {
+      const response = await fetch(`${API_URL}/words/save`, {
         method: 'POST',
         body: formData,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      if (res.ok) {
-        Alert.alert("Başarılı", "Kelime ve örnek cümleler kaydedildi!");
-        setEngWord(''); setTurWord(''); setSamples(['']); setImage(null);
+
+      if (response.ok) {
+        Alert.alert("Başarılı", "Kelime sisteme kaydedildi.");
+        setWordData({ ing: '', tr: '', samples: [''], image: null });
       }
-    } catch (err) { Alert.alert("Hata", "Bağlantı kurulamadı."); }
+    } catch (error) {
+      Alert.alert("Hata", "Kelime kaydedilemedi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // --- STORY 3: SINAV MODÜLÜ ALGORİTMASI ---
-  const fetchQuizWord = async () => {
+  // --- STORY 3: SINAV ---
+  const getNextQuestion = async () => {
     try {
-      const res = await fetch(`${API_BASE}/next-quiz`); // Tarihi gelen kelimeyi getirir
-      const data = await res.json();
-      setQuizWord(data);
-      setShowAnswer(false);
-    } catch (err) { console.log("Sınav kelimesi yok veya hata."); }
+      const response = await fetch(`${API_URL}/words/next-quiz`);
+      const data = await response.json();
+      setQuiz({ question: data, showAnswer: false });
+    } catch (error) {
+      Alert.alert("Bilgi", "Sıradaki soru bulunamadı.");
+    }
   };
 
-  const handleQuizResult = async (isCorrect) => {
-    try {
-      await fetch(`${API_BASE}/update-level`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wordId: quizWord.id, isCorrect })
-      });
-      fetchQuizWord(); // Sıradaki kelimeye geç
-    } catch (err) { Alert.alert("Hata", "Seviye güncellenemedi."); }
-  };
-
-  return (
-    <ScrollView style={styles.container}>
-      {/* STORY 2 ARAYÜZÜ */}
-      <View style={styles.section}>
-        <Text style={styles.header}>Kelime Ekle (Story 2)</Text>
-        <TextInput style={styles.input} placeholder="İngilizce Kelime" value={engWord} onChangeText={setEngWord} />
-        <TextInput style={styles.input} placeholder="Türkçe Karşılığı" value={turWord} onChangeText={setTurWord} />
-        
-        {samples.map((s, i) => (
-          <TextInput key={i} style={styles.input} placeholder={`Örnek Cümle ${i+1}`} 
-            onChangeText={(text) => {
-              const newSamples = [...samples];
-              newSamples[i] = text;
-              setSamples(newSamples);
-            }} 
+  // --- RENDER (GİRİŞ) ---
+  if (!isLoggedIn) {
+    return (
+      <View style={styles.loginContainer}>
+        <Text style={styles.logo}>LearnWord</Text>
+        <View style={styles.loginCard}>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Kullanıcı Adı" 
+            autoCapitalize="none"
+            onChangeText={(val) => setUser({...user, username: val})}
           />
-        ))}
-        <TouchableOpacity onPress={() => setSamples([...samples, ''])}><Text style={{color: 'blue'}}>+ Cümle Ekle</Text></TouchableOpacity>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Şifre" 
+            secureTextEntry 
+            onChangeText={(val) => setUser({...user, password: val})}
+          />
+          <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GİRİŞ YAP</Text>}
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
-        <TouchableOpacity style={styles.imageBtn} onPress={pickImage}>
-          <Text>Resim Seç</Text>
-        </TouchableOpacity>
-        {image && <Image source={{ uri: image }} style={styles.previewImage} />}
+  // --- RENDER (ANA PANEL) ---
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <Text style={styles.welcome}>Merhaba, {user.username} 👋</Text>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Yeni Kelime Ekle</Text>
+        <TextInput 
+          style={styles.input} 
+          placeholder="İngilizce" 
+          value={wordData.ing}
+          onChangeText={(t) => setWordData({...wordData, ing: t})}
+        />
+        <TextInput 
+          style={styles.input} 
+          placeholder="Türkçe Anlamı" 
+          value={wordData.tr}
+          onChangeText={(t) => setWordData({...wordData, tr: t})}
+        />
         
-        <TouchableOpacity style={styles.saveBtn} onPress={saveWord}><Text style={styles.btnText}>KAYDET</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.secondaryBtn} onPress={pickImage}>
+          <Text>{wordData.image ? "Resmi Değiştir" : "Görsel Seç"}</Text>
+        </TouchableOpacity>
+        
+        {wordData.image && <Image source={{ uri: wordData.image }} style={styles.preview} />}
+        
+        <TouchableOpacity style={styles.successBtn} onPress={handleSaveWord}>
+          <Text style={styles.btnText}>VERİTABANINA KAYDET</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* STORY 3 ARAYÜZÜ */}
-      <View style={styles.section}>
-        <Text style={styles.header}>Sınav Modülü (Story 3)</Text>
-        {quizWord ? (
-          <View style={styles.quizCard}>
-            <Text style={styles.quizEng}>{quizWord.engWordName}</Text>
-            {quizWord.picture && <Image source={{uri: quizWord.picture}} style={styles.previewImage}/>}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Kelime Sınavı</Text>
+        {quiz.question ? (
+          <View style={styles.quizBox}>
+            <Text style={styles.wordMain}>{quiz.question.engWordName}</Text>
+            {quiz.showAnswer && <Text style={styles.wordSub}>{quiz.question.turWordName}</Text>}
             
-            {showAnswer ? (
-              <View>
-                <Text style={styles.quizTur}>{quizWord.turWordName}</Text>
-                <View style={styles.row}>
-                  <TouchableOpacity style={styles.correctBtn} onPress={() => handleQuizResult(true)}><Text>Biliyorum</Text></TouchableOpacity>
-                  <TouchableOpacity style={styles.wrongBtn} onPress={() => handleQuizResult(false)}><Text>Bilmiyorum</Text></TouchableOpacity>
-                </View>
-              </View>
+            {!quiz.showAnswer ? (
+              <TouchableOpacity style={styles.primaryBtn} onPress={() => setQuiz({...quiz, showAnswer: true})}>
+                <Text style={styles.btnText}>Cevabı Gör</Text>
+              </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={styles.saveBtn} onPress={() => setShowAnswer(true)}><Text>Cevabı Gör</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.primaryBtn} onPress={getNextQuestion}>
+                <Text style={styles.btnText}>Sıradaki Kelime</Text>
+              </TouchableOpacity>
             )}
           </View>
         ) : (
-          <TouchableOpacity onPress={fetchQuizWord}><Text>Sınavı Başlat</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.secondaryBtn} onPress={getNextQuestion}>
+            <Text>Sınavı Başlat</Text>
+          </TouchableOpacity>
         )}
       </View>
     </ScrollView>
@@ -124,18 +195,20 @@ export default function LearnWordApp() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f0f0f0' },
-  section: { backgroundColor: 'white', padding: 15, borderRadius: 10, marginBottom: 20, elevation: 3 },
-  header: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  input: { borderBottomWidth: 1, marginBottom: 10, padding: 5 },
-  imageBtn: { backgroundColor: '#ddd', padding: 10, alignItems: 'center', marginVertical: 10 },
-  previewImage: { width: 100, height: 100, alignSelf: 'center', marginVertical: 10 },
-  saveBtn: { backgroundColor: '#4CAF50', padding: 10, alignItems: 'center', borderRadius: 5 },
-  btnText: { color: 'white', fontWeight: 'bold' },
-  quizCard: { alignItems: 'center', padding: 10 },
-  quizEng: { fontSize: 24, fontWeight: 'bold' },
-  quizTur: { fontSize: 20, color: 'green', marginVertical: 10 },
-  row: { flexDirection: 'row', gap: 10 },
-  correctBtn: { backgroundColor: '#8bc34a', padding: 10, borderRadius: 5 },
-  wrongBtn: { backgroundColor: '#f44336', padding: 10, borderRadius: 5 }
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
+  loginContainer: { flex: 1, justifyContent: 'center', padding: 25, backgroundColor: '#212529' },
+  logo: { fontSize: 36, fontWeight: 'bold', color: '#fff', textAlign: 'center', marginBottom: 40 },
+  loginCard: { backgroundColor: '#fff', padding: 25, borderRadius: 20, elevation: 10 },
+  welcome: { fontSize: 24, fontWeight: '700', margin: 20, color: '#333' },
+  card: { backgroundColor: '#fff', marginHorizontal: 20, marginBottom: 20, padding: 20, borderRadius: 15, elevation: 5 },
+  cardTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#495057' },
+  input: { backgroundColor: '#F1F3F5', padding: 15, borderRadius: 10, marginBottom: 15, fontSize: 16 },
+  primaryBtn: { backgroundColor: '#007BFF', padding: 15, borderRadius: 10, alignItems: 'center' },
+  secondaryBtn: { borderWidth: 1, borderColor: '#DEE2E6', padding: 12, borderRadius: 10, alignItems: 'center', marginVertical: 10 },
+  successBtn: { backgroundColor: '#28A745', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
+  btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  preview: { width: '100%', height: 180, borderRadius: 10, marginVertical: 10 },
+  quizBox: { alignItems: 'center' },
+  wordMain: { fontSize: 32, fontWeight: 'bold', color: '#212529', marginBottom: 10 },
+  wordSub: { fontSize: 24, color: '#28A745', fontWeight: '600', marginBottom: 20 }
 });
