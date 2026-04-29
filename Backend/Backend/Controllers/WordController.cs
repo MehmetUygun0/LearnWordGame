@@ -36,12 +36,7 @@ namespace Backend.Controllers
                 EngWordName = dto.EngWordName,
                 TurWordName = dto.TurWordName,
                 Picture = dto.Picture,
-                Level = "FromUsers",
-                WordSamples = dto.Samples.Select(s => new UserWordSample
-                {
-                    Sample = s,
-                }).ToList()
-
+                Level = "FromUsers"
             };
             var username = HttpContext.User.Identity?.Name;
 
@@ -62,8 +57,7 @@ namespace Backend.Controllers
                 EngWordName = "Test",
                 TurWordName = "Test",
                 Picture = null,
-                Level = "A1",
-                Samples = new List<string> { "This is a test sample." }
+                Level = "A1"
             };
             return  await AddWord(nesne);
         }
