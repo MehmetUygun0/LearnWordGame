@@ -10,7 +10,7 @@ namespace Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class WordController : ControllerBase
+    public class WordController : BaseController
     {
         private readonly AppDbContext _context;
 
