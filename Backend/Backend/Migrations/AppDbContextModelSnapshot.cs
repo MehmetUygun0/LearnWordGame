@@ -92,7 +92,7 @@ namespace Backend.Migrations
                     b.ToTable("UserWords");
                 });
 
-            modelBuilder.Entity("Backend.Models.UserWordSample", b =>
+            modelBuilder.Entity("Backend.Models.UserWordProgress", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -100,18 +100,26 @@ namespace Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Sample")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("CurrentStep")
+                        .HasColumnType("int");
 
-                    b.Property<int>("UserWordId")
+                    b.Property<bool>("IsLearned")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastCorrectDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NextReviewDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WordId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserWordId");
+                    b.HasIndex("WordId");
 
-                    b.ToTable("UserWordSamples");
+                    b.ToTable("UserWordProgresses");
                 });
 
             modelBuilder.Entity("Backend.Models.Word", b =>
@@ -167,15 +175,15 @@ namespace Backend.Migrations
                     b.ToTable("WordSample");
                 });
 
-            modelBuilder.Entity("Backend.Models.UserWordSample", b =>
+            modelBuilder.Entity("Backend.Models.UserWordProgress", b =>
                 {
-                    b.HasOne("Backend.Models.UserWord", "UserWord")
-                        .WithMany("WordSamples")
-                        .HasForeignKey("UserWordId")
+                    b.HasOne("Backend.Models.Word", "Word")
+                        .WithMany()
+                        .HasForeignKey("WordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("UserWord");
+                    b.Navigation("Word");
                 });
 
             modelBuilder.Entity("Backend.Models.WordSample", b =>
@@ -187,11 +195,6 @@ namespace Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Word");
-                });
-
-            modelBuilder.Entity("Backend.Models.UserWord", b =>
-                {
-                    b.Navigation("WordSamples");
                 });
 
             modelBuilder.Entity("Backend.Models.Word", b =>
