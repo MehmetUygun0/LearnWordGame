@@ -16,7 +16,7 @@ namespace Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController : BaseController
     {
         private readonly AppDbContext _context;
         private readonly ResetCodeStore _resetCodeStore;
@@ -105,19 +105,31 @@ namespace Backend.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
-            bool control = _resetCodeStore.VerifyCode(dto.Email, dto.Code);
+            User? user;
+            try
+            {
+                _ = new MailAddress(dto.UserNameOrEmail);
+                user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.UserNameOrEmail);
+            }
+            catch
+            {
+                user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == dto.UserNameOrEmail);
+            }
 
-            if (control is false)
+            if (user == null)
+            {
+                return NotFound("Kullanıcı veri tabanında bulunamadı.");
+            }
+
+            bool controlCode = _resetCodeStore.VerifyCode(user.Email, dto.Code);
+            if (!controlCode)
             {
                 return BadRequest("Girdiğin kod hatalı veya süresi dolmuş.");
             }
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-            if (user == null) return NotFound("Kullanıcı veri tabanında bulunamadı.");
 
-            byte[] hashedPassword = SHA256.HashPassword(dto.NewPassword);
-            user.Password = hashedPassword;
+            user.Password = SHA256.HashPassword(dto.NewPassword);
             await _context.SaveChangesAsync();
-            _resetCodeStore.RemoveCode(dto.Email);
+            _resetCodeStore.RemoveCode(user.Email);
             return Ok("Şifren başarıyla sıfırlandı. Yeni şifrenle giriş yapabilirsin!");
         }
         [HttpPost("refresh")]
@@ -148,78 +160,59 @@ namespace Backend.Controllers
         }
 
         [Authorize]
-        [HttpGet("/profil-bilgim")]
-        public IActionResult GetProfile()
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
         {
-            var username = User.Identity?.Name;
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            return Ok(new
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
             {
-                mesaj = $"Hoş geldin {username}!",
-                id = userId
-            });
-        }
-
-        [HttpGet("/deneme")]
-        public async Task<IActionResult> Deneme()
-        {
-            var testUser = new LoginDto
-            {
-                UserName = "mehmet",
-                Password = "12345",
-            };
-            var result = await Login(testUser);
-
-            if (result is OkObjectResult okResult)
-            {
-                dynamic data = okResult.Value;
-                string token = data.accessToken;
-                using var client = new HttpClient();
-
-                client.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.GetStringAsync("https://localhost:7047/deneme1");
-
-                return Ok($"İçeriden gelen cevap: {response}");
+                return NotFound(new { message = "Kullanıcı bulunamadı." });
             }
 
-            return BadRequest("Login başarısız oldu, token yok!");
-        }
-        [HttpGet("/test2")]
-        public async Task<IActionResult> sifreSifirla()
-        {
-            var testUser = new ResetPasswordDto
+            var progressSettings = await _context.UserProgressSettings
+                .FirstOrDefaultAsync(setting => setting.UserId == userId);
+
+            if (progressSettings == null)
             {
-                Email = "mehmetuygun1925@gmail.com",
-                Code = 323801,
-                NewPassword = "12345"
-            };
-            Console.WriteLine(await ForgotPassword("mehmetuygun1925@gmail.com"));
-            return await ResetPassword(testUser);
-        }
-        [HttpGet("/ekle")]
-        public async Task<IActionResult> Ekle()
-        {
-            var testUser = new RegisterDto
+                progressSettings = new UserProgressSettings
+                {
+                    UserId = (int)userId
+                };
+                await _context.UserProgressSettings.AddAsync(progressSettings);
+                await _context.SaveChangesAsync();
+            }
+
+            var learnedWordProgresses = await _context.UserWordProgresses
+                .Include(progress => progress.Word)
+                .Where(progress => progress.UserId == userId && progress.IsLearned)
+                .ToListAsync();
+
+            var levelStats = learnedWordProgresses
+                .Where(progress => progress.Word != null && !string.IsNullOrWhiteSpace(progress.Word.Level))
+                .GroupBy(progress => progress.Word!.Level)
+                .OrderBy(group => group.Key)
+                .Select(group => new ProfileLevelStatDto
+                {
+                    Level = group.Key,
+                    Words = group.Count()
+                })
+                .ToList();
+
+            var profile = new ProfileDto
             {
-                UserName = "mehmet",
-                Password = "123",
-                Email = "mehmetuygun1925@gmail.com"
+                UserName = user.UserName,
+                CreatedAt = user.CreatedAt,
+                Level = progressSettings.UserLevel,
+                TotalLearnedWords = Math.Max(progressSettings.TotalWordsLearned, learnedWordProgresses.Count),
+                DailyNewWords = progressSettings.NumberOfNewWords,
+                LevelBasedLearnedWords = levelStats
             };
 
-            return await Register(testUser);
+            return Ok(profile);
         }
-
-        // Bu endpoint'e erişmek için geçerli bir JWT token'ına sahip olmanız gerekir. TEST İÇİN KULLANILACAKTIR, GERÇEK PROJEDE KALMAYACAKTIR.
-        [Authorize]
-        [HttpGet("/deneme1")]
-        public async Task<IActionResult> Deneme1()
-        {
-            return Ok("Erişim başarılı! Geçerli bir token ile bu endpoint'e erişebildiniz.");
-        }
-
     }
 }
