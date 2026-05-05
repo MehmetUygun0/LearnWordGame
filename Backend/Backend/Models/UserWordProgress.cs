@@ -19,8 +19,10 @@ namespace Backend.Models
         public int Id { get; set; }
         [ForeignKey("Word")]
         public int WordId { get; set; }
+        [ForeignKey("User")]
+        public int UserId { get; set; }
         public Word? Word { get; set; }
-        [Range(0,6)]
+        [Range(0, 6)]
         public Step CurrentStep { get; set; } = Step.Start;
         public DateTime? LastCorrectDate { get; set; }
         public DateTime? NextReviewDate { get; set; }

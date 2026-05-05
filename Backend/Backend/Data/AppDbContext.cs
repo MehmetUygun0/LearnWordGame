@@ -22,5 +22,8 @@ namespace Backend.Data
         public DbSet<Word> Words { get; set; }
         public DbSet<UserWord> UserWords { get; set; }
         public DbSet<UserWordProgress> UserWordProgresses { get; set; }
+        public DbSet<UserProgressSettings> UserProgressSettings { get; set; }
+
+
     }
 }

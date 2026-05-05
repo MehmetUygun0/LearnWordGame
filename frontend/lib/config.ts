@@ -1,10 +1,10 @@
 // @ts-nocheck
 const DEV_MODE = true;
-const DEV_IP = '192.168.1.102'; //Kendi ip adresinizi kopyalayıp yapıştırın '' arasına
+const DEV_IP = 'localhost'; //Kendi ip adresinizi kopyalayıp yapıştırın '' arasına
 
 const config = {
   // Geliştirme ortamında ekipte herkes kendi IP'sini buradan yönetiyor.
-  API_URL: DEV_MODE ? `http://${DEV_IP}:5001` : 'https://production-api.com',
+  API_URL: DEV_MODE ? `https://${DEV_IP}:7047` : 'https://production-api.com',
   ENDPOINTS: {
     AUTH: {
       REGISTER: '/api/auth/register',
