@@ -7,13 +7,15 @@ const config = {
   API_URL: DEV_MODE ? `https://${DEV_IP}:7047` : 'https://production-api.com',
   ENDPOINTS: {
     AUTH: {
-      REGISTER: '/api/auth/register',
-      LOGIN: '/api/auth/login',
-      FORGOT_PASSWORD: '/api/auth/forgot-password',
-      ME: '/api/auth/me',
+      REGISTER: '/api/User/register',
+      LOGIN: '/api/User/login',
+      FORGOT_PASSWORD: '/api/User/forgot-password',
+      RESET_PASSWORD: '/api/User/reset-password',
+      REFRESH: '/api/User/refresh',
+      PROFILE: '/api/User/profile',
     },
     WORDS: {
-      LIST: '/api/words',
+      ADD: '/api/Word/add',
     },
   },
   // Şimdilik socket akışı aktif değil ama ileride canlı özellikler için hazır tutuluyor.
