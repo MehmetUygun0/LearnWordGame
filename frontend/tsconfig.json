@@ -15,6 +15,7 @@
     "app/(app)/home.tsx",
     "app/(app)/study.tsx",
     "app/(app)/words.tsx",
+    "app/(app)/wordle.tsx",
     "app/(app)/report.tsx",
     "app/(app)/settings.tsx",
     "app/(auth)/_layout.tsx",
@@ -34,6 +35,7 @@
     "lib/**/*.ts",
     "lib/**/*.tsx",
     "services/**/*.ts",
+    "WordleGame.tsx",
     "expo-env.d.ts",
     ".expo/types/**/*.ts",
     ".expo/types/**/*.tsx"

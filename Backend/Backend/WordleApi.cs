@@ -70,13 +70,13 @@ namespace Backend.Controllers
                 .Select(word => word.EngWordName)
                 .ToListAsync();
 
-            var userWordsQuery = _context.UserWords.AsNoTracking();
-            if (userId is not null)
-                userWordsQuery = userWordsQuery.Where(word => word.UserId == userId.Value);
-
-            var userWords = await userWordsQuery
-                .Select(word => word.EngWordName)
-                .ToListAsync();
+            var userWords = userId is null
+                ? []
+                : await _context.UserWords
+                    .AsNoTracking()
+                    .Where(word => word.UserId == userId.Value)
+                    .Select(word => word.EngWordName)
+                    .ToListAsync();
 
             return systemWords
                 .Concat(userWords)

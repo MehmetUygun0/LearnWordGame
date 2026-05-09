@@ -16,6 +16,7 @@ import {
   Alert,
 } from "react-native";
 import config from "./lib/config";
+import { useAuth } from "./lib/auth-context";
 
 // ── Config ──────────────────────────────────────────────────────────
 const API_BASE = config.API_URL;
@@ -72,6 +73,7 @@ const C = {
 // Main component
 // ──────────────────────────────────────────────────────────────────────
 export default function WordleGame() {
+  const { token } = useAuth();
   const [gameId, setGameId]         = useState<string | null>(null);
   const [board, setBoard]           = useState<Tile[][]>(emptyBoard());
   const [currentRow, setCurrentRow] = useState(0);
@@ -108,15 +110,23 @@ export default function WordleGame() {
     flipAnims.forEach(row => row.forEach(a => a.setValue(0)));
 
     try {
-      const res  = await fetch(`${API_BASE}/api/wordle/new-game`);
+      const res  = await fetch(`${API_BASE}/api/wordle/new-game`, {
+        headers: token && token !== "demo-session" ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await res.json();
+
+      if (!res.ok) {
+        showMessage(data?.error ?? "Wordle icin uygun kelime bulunamadi", 3000);
+        return;
+      }
+
       setGameId(data.gameId);
     } catch {
       showMessage("Could not connect to server", 3000);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => { startGame(); }, [startGame]);
 
@@ -166,7 +176,10 @@ export default function WordleGame() {
     try {
       const res  = await fetch(`${API_BASE}/api/wordle/guess`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && token !== "demo-session" ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ gameId, guess }),
       });
       const data: GuessResult = await res.json();
@@ -218,7 +231,7 @@ export default function WordleGame() {
       showMessage("Server error — check connection", 2500);
       setLoading(false);
     }
-  }, [gameId, board, currentRow, currentCol]);
+  }, [gameId, board, currentRow, currentCol, token]);
 
   // ── Helpers ──────────────────────────────────────────────────────
   const showMessage = (msg: string, duration = 2000) => {
