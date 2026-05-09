@@ -53,8 +53,8 @@ export default function LoginScreen() {
     <ScreenContainer scrollable contentStyle={styles.content}>
       <SectionHeader
         eyebrow="LearnWordGame"
-        title="6 tekrar mantığıyla akıllı kelime çalış."
-        description="Bu ekran artık token tabanlı auth akışına hazır. Backend login kontratı sağlandığında doğrudan çalışacak."
+        title="6 tekrar mantığıyla kelimeleri düzenli çalış."
+        description="Giriş yaptığında günlük kelime havuzuna, çalışma oturumuna ve rapor ekranlarına tek akış içinde geçersin."
       />
 
       <SurfaceCard>
@@ -84,6 +84,13 @@ export default function LoginScreen() {
         />
       </SurfaceCard>
 
+      <SurfaceCard muted>
+        <Text style={styles.noteTitle}>Bu ekranda hazır olanlar</Text>
+        <Text style={styles.noteText}>Gerçek giriş akışı JWT access token ve refresh token ile çalışacak şekilde hazırlandı.</Text>
+        <Text style={styles.noteText}>Demo girişi yalnızca ekranları hızlıca gezmek için bırakıldı.</Text>
+        <Text style={styles.noteText}>Başarılı girişten sonra kullanıcı doğrudan uygulama sekmelerine yönlendirilir.</Text>
+      </SurfaceCard>
+
       <View style={styles.footerLinks}>
         <Pressable onPress={() => router.push('/(auth)/register')}>
           <Text style={styles.link}>Hesabın yok mu? Kayıt ol</Text>
@@ -104,6 +111,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     alignItems: 'center',
     marginBottom: spacing.xl,
+  },
+  noteTitle: {
+    ...typography.cardTitle,
+    color: palette.text,
+  },
+  noteText: {
+    ...typography.body,
+    color: palette.textMuted,
   },
   link: {
     ...typography.label,

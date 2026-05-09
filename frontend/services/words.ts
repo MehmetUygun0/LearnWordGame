@@ -1,7 +1,4 @@
 // @ts-nocheck
-import config from '@/lib/config';
-import { apiRequest, readResponsePayload } from '@/lib/api';
-
 export type WordLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 
 export type WordListItem = {
@@ -65,22 +62,8 @@ const mockWords: WordListItem[] = [
 const levelOrder: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
 export const getWords = async () => {
-  try {
-    const response = await apiRequest({
-      endpoint: config.ENDPOINTS.WORDS.LIST,
-      method: 'GET',
-    });
-
-    const payload = await readResponsePayload(response);
-
-    if (!response.ok || !Array.isArray(payload)) {
-      return mockWords;
-    }
-
-    return payload.map(normalizeWord).sort(sortByLevel);
-  } catch {
-    return mockWords;
-  }
+  // Backend tarafında henüz liste endpoint'i olmadığı için ekran fallback kelime havuzu ile çalışıyor.
+  return mockWords.map(normalizeWord).sort(sortByLevel);
 };
 
 const normalizeWord = (item: any): WordListItem => ({
@@ -107,3 +90,18 @@ const normalizeLevel = (level: unknown): WordLevel => {
 
 const sortByLevel = (left: WordListItem, right: WordListItem) =>
   levelOrder.indexOf(left.level) - levelOrder.indexOf(right.level);
+
+export const getWordsForLevel = async (level?: string) => {
+  const words = await getWords();
+
+  if (!level || !levelOrder.includes(level as WordLevel)) {
+    return words;
+  }
+
+  return words.filter((word) => word.level === level);
+};
+
+export const getDefaultWordByLevel = async (level?: string) => {
+  const filteredWords = await getWordsForLevel(level);
+  return filteredWords[0] ?? mockWords[0];
+};

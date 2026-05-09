@@ -3,13 +3,20 @@ import config from '@/lib/config';
 import { apiRequest, getErrorMessage, readResponsePayload } from '@/lib/api';
 
 export type AuthUser = {
-  id: number;
   userName: string;
+  level?: string;
+  totalLearnedWords?: number;
+  dailyNewWords?: number;
+  createdAt?: string;
+  levelBasedLearnedWords?: {
+    level: string;
+    words: number;
+  }[];
 };
 
 export type AuthSession = {
-  token: string;
-  expiresAt: string;
+  accessToken: string;
+  refreshToken: string;
   user: AuthUser;
   mode?: 'api' | 'demo';
 };
@@ -29,6 +36,12 @@ type ForgotPasswordInput = {
   identity: string;
 };
 
+type ResetPasswordInput = {
+  userNameOrEmail: string;
+  code: string;
+  newPassword: string;
+};
+
 export const loginRequest = async ({ userName, password }: LoginInput) => {
   const response = await apiRequest({
     endpoint: config.ENDPOINTS.AUTH.LOGIN,
@@ -40,12 +53,9 @@ export const loginRequest = async ({ userName, password }: LoginInput) => {
   });
 
   const payload = await readResponsePayload(response);
+  ensureSuccess(response, payload, 'Giriş sırasında bir sorun oluştu.');
 
-  if (!response.ok) {
-    throw new Error(getErrorMessage(payload, 'Giriş sırasında bir sorun oluştu.'));
-  }
-
-  return normalizeAuthSession(payload);
+  return normalizeTokenPair(payload);
 };
 
 export const registerRequest = async ({ userName, password, email }: RegisterInput) => {
@@ -54,85 +64,125 @@ export const registerRequest = async ({ userName, password, email }: RegisterInp
     method: 'POST',
     body: JSON.stringify({
       userName: userName.trim(),
-      email: email?.trim() || undefined,
+      email: email?.trim() || '',
       password,
     }),
   });
 
   const payload = await readResponsePayload(response);
+  ensureSuccess(response, payload, 'Kayıt sırasında bir sorun oluştu.');
 
-  if (!response.ok) {
-    throw new Error(getErrorMessage(payload, 'Kayıt sırasında bir sorun oluştu.'));
-  }
-
-  return normalizeAuthSession(payload);
+  return loginRequest({
+    userName,
+    password,
+  });
 };
 
 export const forgotPasswordRequest = async ({ identity }: ForgotPasswordInput) => {
   const response = await apiRequest({
-    endpoint: config.ENDPOINTS.AUTH.FORGOT_PASSWORD,
+    endpoint: `${config.ENDPOINTS.AUTH.FORGOT_PASSWORD}?usernameOrEmail=${encodeURIComponent(identity.trim())}`,
+    method: 'POST',
+  });
+
+  const payload = await readResponsePayload(response);
+  ensureSuccess(response, payload, 'Şifre sıfırlama isteği gönderilemedi.');
+
+  return {
+    message: getErrorMessage(payload, 'Sıfırlama kodu gönderildi.'),
+  };
+};
+
+export const resetPasswordRequest = async ({
+  userNameOrEmail,
+  code,
+  newPassword,
+}: ResetPasswordInput) => {
+  const response = await apiRequest({
+    endpoint: config.ENDPOINTS.AUTH.RESET_PASSWORD,
     method: 'POST',
     body: JSON.stringify({
-      identity: identity.trim(),
+      userNameOrEmail: userNameOrEmail.trim(),
+      code: Number(code),
+      newPassword,
     }),
   });
 
   const payload = await readResponsePayload(response);
-
-  if (!response.ok) {
-    throw new Error(getErrorMessage(payload, 'Şifre sıfırlama isteği gönderilemedi.'));
-  }
+  ensureSuccess(response, payload, 'Şifre güncellenemedi.');
 
   return {
-    message: getErrorMessage(payload, 'Şifre sıfırlama bağlantısı gönderildi.'),
+    message: getErrorMessage(payload, 'Şifre başarıyla güncellendi.'),
   };
 };
 
-export const getCurrentUserRequest = async (token: string) => {
+export const refreshTokenRequest = async ({
+  accessToken,
+  refreshToken,
+}: {
+  accessToken: string;
+  refreshToken: string;
+}) => {
   const response = await apiRequest({
-    endpoint: config.ENDPOINTS.AUTH.ME,
-    method: 'GET',
-    token,
+    endpoint: config.ENDPOINTS.AUTH.REFRESH,
+    method: 'POST',
+    body: JSON.stringify({
+      accessToken,
+      refreshToken,
+    }),
   });
 
   const payload = await readResponsePayload(response);
+  ensureSuccess(response, payload, 'Oturum yenilenemedi.');
 
-  if (!response.ok) {
-    throw new Error(getErrorMessage(payload, 'Oturum doğrulanamadı.'));
-  }
-
-  if (
-    !payload ||
-    typeof payload !== 'object' ||
-    typeof payload.id !== 'number' ||
-    typeof payload.userName !== 'string'
-  ) {
-    throw new Error('Geçersiz kullanıcı yanıtı alındı.');
-  }
-
-  return payload as AuthUser;
+  return normalizeTokenPair(payload);
 };
 
-const normalizeAuthSession = (payload: unknown): AuthSession => {
+export const getCurrentUserRequest = async (accessToken: string) => {
+  const response = await apiRequest({
+    endpoint: config.ENDPOINTS.AUTH.PROFILE,
+    method: 'GET',
+    token: accessToken,
+  });
+
+  const payload = await readResponsePayload(response);
+  ensureSuccess(response, payload, 'Profil alınamadı.');
+
+  if (!payload || typeof payload !== 'object' || typeof payload.userName !== 'string') {
+    throw new Error('Geçersiz profil yanıtı alındı.');
+  }
+
+  return {
+    userName: payload.userName,
+    level: typeof payload.level === 'string' ? payload.level : undefined,
+    totalLearnedWords:
+      typeof payload.totalLearnedWords === 'number' ? payload.totalLearnedWords : undefined,
+    dailyNewWords:
+      typeof payload.dailyNewWords === 'number' ? payload.dailyNewWords : undefined,
+    createdAt: typeof payload.createdAt === 'string' ? payload.createdAt : undefined,
+    levelBasedLearnedWords: Array.isArray(payload.levelBasedLearnedWords)
+      ? payload.levelBasedLearnedWords
+      : undefined,
+  } satisfies AuthUser;
+};
+
+const normalizeTokenPair = (payload: unknown) => {
   if (
     !payload ||
     typeof payload !== 'object' ||
-    typeof payload.token !== 'string' ||
-    typeof payload.expiresAt !== 'string' ||
-    !payload.user ||
-    typeof payload.user !== 'object' ||
-    typeof payload.user.id !== 'number' ||
-    typeof payload.user.userName !== 'string'
+    typeof payload.accessToken !== 'string' ||
+    typeof payload.refreshToken !== 'string'
   ) {
     throw new Error('Beklenen oturum yanıtı alınamadı.');
   }
 
   return {
-    token: payload.token,
-    expiresAt: payload.expiresAt,
-    user: {
-      id: payload.user.id,
-      userName: payload.user.userName,
-    },
+    accessToken: payload.accessToken,
+    refreshToken: payload.refreshToken,
   };
+};
+
+const ensureSuccess = (response: Response, payload: unknown, fallback: string) => {
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, fallback));
+  }
 };
