@@ -42,7 +42,7 @@ namespace Backend.Controllers
                 return NotFound(new { message = "Kullanıcı zaten var." });
             }
 
-            await _context.Users.AddAsync(new User { UserName = dto.UserName, Password = hashedPassword, Email = dto.Email });
+            await _context.Users.AddAsync(new User { UserName = dto.UserName, Password = hashedPassword, Email = dto.Email, CreatedAt = DateTime.UtcNow });
             await _context.SaveChangesAsync();
             return Ok();
         }

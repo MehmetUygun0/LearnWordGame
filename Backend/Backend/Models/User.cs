@@ -14,6 +14,7 @@ namespace Backend.Models
         [Required]
         [EmailAddress]
         public required string Email { get; set; }
+        public required DateTime CreatedAt { get; set; }= DateTime.UtcNow;
 
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
