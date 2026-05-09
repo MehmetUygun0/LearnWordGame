@@ -1,4 +1,6 @@
 // @ts-nocheck
+import config from '@/lib/config';
+import { apiRequest, getErrorMessage, readResponsePayload } from '@/lib/api';
 export type WordLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 
 export type WordListItem = {
@@ -60,10 +62,64 @@ const mockWords: WordListItem[] = [
 ];
 
 const levelOrder: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
+const userAddedWords: WordListItem[] = [];
 
 export const getWords = async () => {
   // Backend tarafında henüz liste endpoint'i olmadığı için ekran fallback kelime havuzu ile çalışıyor.
-  return mockWords.map(normalizeWord).sort(sortByLevel);
+  return [...userAddedWords, ...mockWords].map(normalizeWord).sort(sortByLevel);
+};
+
+export const addWord = async ({
+  engWordName,
+  turWordName,
+  picture,
+  level,
+  samples,
+  token,
+}: {
+  engWordName: string;
+  turWordName: string;
+  picture?: string;
+  level: WordLevel;
+  samples: string[];
+  token?: string | null;
+}) => {
+  const nextWord = normalizeWord({
+    id: Date.now(),
+    engWordName: engWordName.trim(),
+    turWordName: turWordName.trim(),
+    pictureUrl: picture?.trim() || null,
+    level,
+    samples: samples.map((sample) => sample.trim()).filter(Boolean),
+  });
+
+  if (token && token !== 'demo-session') {
+    const response = await apiRequest({
+      endpoint: config.ENDPOINTS.WORDS.ADD,
+      method: 'POST',
+      token,
+      body: JSON.stringify({
+        engWordName: nextWord.engWordName,
+        turWordName: nextWord.turWordName,
+        picture: nextWord.pictureUrl,
+        level: nextWord.level,
+        samples: nextWord.samples,
+      }),
+    });
+
+    const payload = await readResponsePayload(response);
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(payload, 'Kelime eklenemedi.'));
+    }
+
+    if (payload && typeof payload === 'object' && typeof payload.id === 'number') {
+      nextWord.id = payload.id;
+    }
+  }
+
+  userAddedWords.unshift(nextWord);
+  return nextWord;
 };
 
 const normalizeWord = (item: any): WordListItem => ({

@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { AppButton } from '@/components/ui/AppButton';
 import { AppInput } from '@/components/ui/AppInput';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -9,16 +10,27 @@ import { StatCard } from '@/components/ui/StatCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { WordCard } from '@/components/ui/WordCard';
 import { palette, radius, spacing, typography } from '@/constants/theme';
-import { getWords, WordListItem, WordLevel } from '@/services/words';
+import { useAuth } from '@/lib/auth-context';
+import { addWord, getWords, WordListItem, WordLevel } from '@/services/words';
 
 const levels: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 const allLevels: (WordLevel | 'ALL')[] = ['ALL', ...levels];
 
 export default function WordsScreen() {
+  const { token } = useAuth();
   const [words, setWords] = useState<WordListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<WordLevel | 'ALL'>('ALL');
+  const [newWord, setNewWord] = useState({
+    engWordName: '',
+    turWordName: '',
+    picture: '',
+    samples: '',
+    level: 'A1' as WordLevel,
+  });
+  const [formMessage, setFormMessage] = useState('');
 
   useEffect(() => {
     const loadWords = async () => {
@@ -49,6 +61,38 @@ export default function WordsScreen() {
 
   const totalSampleCount = filteredWords.reduce((total, word) => total + word.samples.length, 0);
 
+  const handleAddWord = async () => {
+    if (!newWord.engWordName.trim() || !newWord.turWordName.trim()) {
+      setFormMessage('İngilizce ve Türkçe kelime alanları zorunlu.');
+      return;
+    }
+
+    setIsSaving(true);
+    setFormMessage('');
+
+    try {
+      const savedWord = await addWord({
+        ...newWord,
+        samples: newWord.samples.split('\n'),
+        token,
+      });
+
+      setWords((currentWords) => [savedWord, ...currentWords]);
+      setNewWord({
+        engWordName: '',
+        turWordName: '',
+        picture: '',
+        samples: '',
+        level: 'A1',
+      });
+      setFormMessage('Kelime havuza eklendi.');
+    } catch (error) {
+      setFormMessage(error instanceof Error ? error.message : 'Kelime eklenemedi.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <ScreenContainer scrollable>
       <SectionHeader
@@ -61,6 +105,60 @@ export default function WordsScreen() {
         <StatCard eyebrow="Toplam kelime" value={`${filteredWords.length} kayıt`} />
         <StatCard eyebrow="Örnek cümle" value={`${totalSampleCount} içerik`} accent="secondary" />
       </View>
+
+      <SurfaceCard style={styles.formCard}>
+        <Text style={styles.infoTitle}>Kelime ekle</Text>
+        <Text style={styles.infoText}>
+          İngilizce kelime, Türkçe karşılığı, örnek cümle ve görsel bilgisiyle kendi havuzuna kayıt aç.
+        </Text>
+        <AppInput
+          label="İngilizce kelime"
+          placeholder="brain"
+          value={newWord.engWordName}
+          onChangeText={(engWordName) => setNewWord((prev) => ({ ...prev, engWordName }))}
+        />
+        <AppInput
+          label="Türkçe karşılığı"
+          placeholder="beyin, zeka"
+          value={newWord.turWordName}
+          onChangeText={(turWordName) => setNewWord((prev) => ({ ...prev, turWordName }))}
+        />
+        <AppInput
+          label="Görsel adresi"
+          placeholder="https://... veya C://words/yeri.jpeg"
+          value={newWord.picture}
+          onChangeText={(picture) => setNewWord((prev) => ({ ...prev, picture }))}
+          helperText="Opsiyonel alan."
+        />
+        <AppInput
+          label="Örnek cümleler"
+          placeholder="Her satıra bir cümle yaz"
+          value={newWord.samples}
+          onChangeText={(samples) => setNewWord((prev) => ({ ...prev, samples }))}
+        />
+        <View style={styles.filterRow}>
+          {levels.map((level) => {
+            const isActive = newWord.level === level;
+
+            return (
+              <Pressable
+                key={level}
+                onPress={() => setNewWord((prev) => ({ ...prev, level }))}
+                style={[styles.filterChip, isActive && styles.filterChipActive]}>
+                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                  {level}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        {formMessage ? <Text style={styles.formMessage}>{formMessage}</Text> : null}
+        <AppButton
+          label={isSaving ? 'Kaydediliyor...' : 'Kelimeyi ekle'}
+          onPress={handleAddWord}
+          disabled={isSaving}
+        />
+      </SurfaceCard>
 
       <SurfaceCard muted style={styles.filterCard}>
         <Text style={styles.infoTitle}>Liste davranışı</Text>
@@ -144,12 +242,19 @@ const styles = StyleSheet.create({
   filterCard: {
     gap: spacing.md,
   },
+  formCard: {
+    gap: spacing.md,
+  },
   infoTitle: {
     ...typography.cardTitle,
     color: palette.text,
   },
   infoText: {
     ...typography.body,
+    color: palette.textMuted,
+  },
+  formMessage: {
+    ...typography.caption,
     color: palette.textMuted,
   },
   filterRow: {

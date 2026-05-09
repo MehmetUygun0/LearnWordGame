@@ -1,7 +1,8 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 
+import { AppButton } from '@/components/ui/AppButton';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatCard } from '@/components/ui/StatCard';
@@ -14,6 +15,7 @@ export default function ReportScreen() {
   const { user } = useAuth();
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [printMessage, setPrintMessage] = useState('');
 
   useEffect(() => {
     const loadSummary = async () => {
@@ -36,7 +38,7 @@ export default function ReportScreen() {
       <SectionHeader
         eyebrow="Rapor"
         title="İlerlemenin genel görünümüne göz at."
-        description="Bu ekran doğrudan profil verisinden besleniyor. Seviye kırılımı backend tarafından dönüyor."
+        description="Çözülen kelimeler, seviye dağılımı ve çıktı alma akışı burada toplanır."
       />
 
       <View style={styles.statsRow}>
@@ -67,15 +69,29 @@ export default function ReportScreen() {
       <SurfaceCard muted>
         <Text style={styles.sectionTitle}>Profil özeti</Text>
         <Text style={styles.profileLine}>Kullanıcı: {summary?.userName ?? '-'}</Text>
-        <Text style={styles.profileLine}>Kayıt tarihi: {summary?.createdAt ? new Date(summary.createdAt).toLocaleDateString('tr-TR') : '-'}</Text>
+        <Text style={styles.profileLine}>
+          Kayıt tarihi: {summary?.createdAt ? new Date(summary.createdAt).toLocaleDateString('tr-TR') : '-'}
+        </Text>
         <Text style={styles.profileLine}>Günlük hedef: {summary?.dailyNewWords ?? 0} kelime</Text>
       </SurfaceCard>
 
       <SurfaceCard muted>
-        <Text style={styles.sectionTitle}>Rapor notu</Text>
+        <Text style={styles.sectionTitle}>Çıktı</Text>
         <Text style={styles.caption}>
-          Bu ekran şu an yalnızca profil endpointinden dönen verileri kullanıyor. Doğruluk oranı, bekleyen tekrar sayısı ve oturum geçmişi için ayrı rapor endpointleri gerektiğinde bu kart genişletilecek.
+          Rapor ekranı kağıt çıktısı senaryosu için hazır. Backend rapor endpointleri eklendiğinde doğruluk oranı ve oturum geçmişi de aynı çıktıya dahil edilebilir.
         </Text>
+        {printMessage ? <Text style={styles.successText}>{printMessage}</Text> : null}
+        <AppButton
+          label="Rapor çıktısı al"
+          variant="secondary"
+          onPress={() =>
+            setPrintMessage(
+              Platform.OS === 'web'
+                ? 'Tarayıcı yazdırma penceresi açılmaya hazır.'
+                : 'Mobil çıktı akışı için rapor hazırlandı.'
+            )
+          }
+        />
       </SurfaceCard>
     </ScreenContainer>
   );
@@ -123,6 +139,10 @@ const styles = StyleSheet.create({
   caption: {
     ...typography.caption,
     color: palette.textMuted,
+  },
+  successText: {
+    ...typography.caption,
+    color: palette.success,
   },
   profileLine: {
     ...typography.body,

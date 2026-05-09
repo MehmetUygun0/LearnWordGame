@@ -16,6 +16,7 @@
     "app/(app)/study.tsx",
     "app/(app)/words.tsx",
     "app/(app)/wordle.tsx",
+    "app/(app)/word-chain.tsx",
     "app/(app)/report.tsx",
     "app/(app)/settings.tsx",
     "app/(auth)/_layout.tsx",

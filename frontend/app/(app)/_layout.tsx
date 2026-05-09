@@ -79,6 +79,15 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen
+        name="word-chain"
+        options={{
+          title: 'Chain',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="git-branch-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="report"
         options={{
           title: 'Rapor',

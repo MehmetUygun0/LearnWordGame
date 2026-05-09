@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import * as ExpoRouter from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -17,12 +17,15 @@ export default function SettingsScreen() {
   const { logout, user } = useAuth();
   const [summary, setSummary] = useState<SettingsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [dailyNewWords, setDailyNewWords] = useState(user?.dailyNewWords ?? 10);
+  const [saveMessage, setSaveMessage] = useState('');
 
   useEffect(() => {
     const loadSummary = async () => {
       try {
         const nextSummary = await getSettingsSummary(user);
         setSummary(nextSummary);
+        setDailyNewWords(nextSummary.dailyNewWords || 10);
       } finally {
         setIsLoading(false);
       }
@@ -34,6 +37,11 @@ export default function SettingsScreen() {
   const handleLogout = async () => {
     await logout();
     router.replace('/(auth)/login');
+  };
+
+  const changeDailyLimit = (amount: number) => {
+    setDailyNewWords((current) => Math.min(Math.max(current + amount, 1), 50));
+    setSaveMessage('');
   };
 
   return (
@@ -56,10 +64,18 @@ export default function SettingsScreen() {
           <View>
             <Text style={styles.preferenceTitle}>Günlük yeni kelime</Text>
             <Text style={styles.preferenceText}>
-              Profil ayarına göre şu an {summary?.dailyNewWords ?? 0} kelime planlanıyor.
+              Bugün çalışma oturumunda {dailyNewWords} yeni kelime planlanıyor.
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />
+          <View style={styles.stepper}>
+            <Pressable style={styles.stepperButton} onPress={() => changeDailyLimit(-1)}>
+              <Ionicons name="remove" size={18} color={palette.text} />
+            </Pressable>
+            <Text style={styles.stepperValue}>{dailyNewWords}</Text>
+            <Pressable style={styles.stepperButton} onPress={() => changeDailyLimit(1)}>
+              <Ionicons name="add" size={18} color={palette.text} />
+            </Pressable>
+          </View>
         </View>
         <View style={styles.preferenceRow}>
           <View>
@@ -83,6 +99,18 @@ export default function SettingsScreen() {
           Bu ekran şu an backend profil verisini yalnızca gösteriyor. Ayar güncelleme endpoint’i geldiğinde düzenleme açılacak.
         </Text>
         <AppButton label="Çıkış" variant="ghost" onPress={handleLogout} />
+      </SurfaceCard>
+
+      <SurfaceCard muted>
+        <Text style={styles.preferenceTitle}>Ayarı kaydet</Text>
+        <Text style={styles.preferenceText}>
+          Günlük kelime hedefi bu oturumda kullanılacak. Backend güncelleme endpointi eklenince kalıcı kayıt aynı butona bağlanacak.
+        </Text>
+        {saveMessage ? <Text style={styles.savedText}>{saveMessage}</Text> : null}
+        <AppButton
+          label="Günlük hedefi uygula"
+          onPress={() => setSaveMessage(`${dailyNewWords} kelimelik hedef uygulandı.`)}
+        />
       </SurfaceCard>
 
       <SurfaceCard muted>
@@ -125,5 +153,30 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: palette.textMuted,
     marginTop: 4,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  stepperButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.cardMuted,
+  },
+  stepperValue: {
+    ...typography.cardTitle,
+    minWidth: 28,
+    color: palette.text,
+    textAlign: 'center',
+  },
+  savedText: {
+    ...typography.caption,
+    color: palette.success,
   },
 });
