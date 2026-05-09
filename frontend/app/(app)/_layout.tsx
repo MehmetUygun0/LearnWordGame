@@ -70,6 +70,15 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen
+        name="wordle"
+        options={{
+          title: 'Wordle',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="game-controller-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="report"
         options={{
           title: 'Rapor',

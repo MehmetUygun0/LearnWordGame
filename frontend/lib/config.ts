@@ -4,7 +4,7 @@ const DEV_IP = 'localhost'; //Kendi ip adresinizi kopyalayıp yapıştırın '' 
 
 const config = {
   // Geliştirme ortamında ekipte herkes kendi IP'sini buradan yönetiyor.
-  API_URL: DEV_MODE ? `https://${DEV_IP}:7047` : 'https://production-api.com',
+  API_URL: DEV_MODE ? `http://${DEV_IP}:5184` : 'https://production-api.com',
   ENDPOINTS: {
     AUTH: {
       REGISTER: '/api/User/register',

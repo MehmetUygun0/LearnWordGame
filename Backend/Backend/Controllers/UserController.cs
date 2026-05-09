@@ -205,7 +205,7 @@ namespace Backend.Controllers
             var profile = new ProfileDto
             {
                 UserName = user.UserName,
-                CreatedAt = user.CreatedAt,
+                CreatedAt = DateTime.UtcNow,
                 Level = progressSettings.UserLevel,
                 TotalLearnedWords = Math.Max(progressSettings.TotalWordsLearned, learnedWordProgresses.Count),
                 DailyNewWords = progressSettings.NumberOfNewWords,
