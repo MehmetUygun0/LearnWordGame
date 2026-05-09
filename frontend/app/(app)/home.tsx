@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ExpoRouter from 'expo-router';
 
@@ -11,18 +11,35 @@ import { StatCard } from '@/components/ui/StatCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
+import { DashboardSummary, getDashboardSummary } from '@/services/dashboard';
 
 export default function HomeScreen() {
   const { router } = ExpoRouter;
   const { user } = useAuth();
-  const initials = user?.userName?.slice(0, 2).toUpperCase() || 'OU';
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        const nextSummary = await getDashboardSummary(user);
+        setSummary(nextSummary);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSummary();
+  }, [user]);
+
+  const initials = summary?.initials ?? 'OU';
 
   return (
     <ScreenContainer scrollable>
       <View style={styles.header}>
         <SectionHeader
           eyebrow="Ana ekran"
-          title={`Hoş geldin${user?.userName ? `, ${user.userName}` : ''}.`}
+          title={`Hoş geldin${summary?.userName ? `, ${summary.userName}` : ''}.`}
           description="Günlük tekrar, yeni kart ve çalışma akışı bu merkezden başlayacak."
         />
         <View style={styles.avatar}>
@@ -30,10 +47,30 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={styles.statsRow}>
-        <StatCard eyebrow="Bugünkü tekrar" value="18 kelime" />
-        <StatCard eyebrow="Yeni kart" value="6 kelime" accent="secondary" />
-      </View>
+      {isLoading ? (
+        <SurfaceCard muted style={styles.loadingCard}>
+          <ActivityIndicator color={palette.text} />
+          <Text style={styles.loadingText}>Ana ekran özeti hazırlanıyor...</Text>
+        </SurfaceCard>
+      ) : (
+        <>
+          <View style={styles.statsRow}>
+            <StatCard eyebrow="Öğrenilen" value={`${summary?.learnedWords ?? 0} kelime`} />
+            <StatCard
+              eyebrow="Günlük yeni kelime"
+              value={`${summary?.dailyNewWords ?? 0} kelime`}
+              accent="secondary"
+            />
+          </View>
+
+          <SurfaceCard muted>
+            <Text style={styles.summaryLabel}>Bugünkü akış</Text>
+            <Text style={styles.summaryText}>
+              Bu seviyede havuzda {summary?.levelLibraryCount ?? 0} kelime var. Çalışma ekranı bugün yaklaşık {summary?.todayEstimatedCount ?? 0} kart gösterecek şekilde hazırlandı.
+            </Text>
+          </SurfaceCard>
+        </>
+      )}
 
       <SurfaceCard>
         <View style={styles.featureIcon}>
@@ -46,12 +83,27 @@ export default function HomeScreen() {
         <AppButton label="Kelime havuzunu aç" onPress={() => router.push('/(app)/words')} />
       </SurfaceCard>
 
+      <SurfaceCard muted>
+        <View style={styles.featureIconSecondary}>
+          <Ionicons name="flash-outline" size={22} color={palette.text} />
+        </View>
+        <Text style={styles.featureTitle}>Bugünkü çalışma</Text>
+        <Text style={styles.featureText}>
+          Study endpointi henüz backendde yok. Buna rağmen ekran akışı hazır; mevcut seviyene göre örnek oturumu açabilirsin.
+        </Text>
+        <AppButton
+          label="Çalışma ekranına git"
+          variant="secondary"
+          onPress={() => router.push('/(app)/study')}
+        />
+      </SurfaceCard>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Hızlı özet</Text>
         <SurfaceCard style={styles.summaryCard} muted>
-          <Text style={styles.summaryLabel}>Başarı oranı</Text>
-          <Text style={styles.summaryValue}>%72</Text>
-          <Text style={styles.summaryText}>Gerçek veriler rapor sprintinde backend tarafından doldurulacak.</Text>
+          <Text style={styles.summaryLabel}>Mevcut seviye</Text>
+          <Text style={styles.summaryValue}>{summary?.level ?? 'A1'}</Text>
+          <Text style={styles.summaryText}>Bu veri backend profil endpointinden okunuyor.</Text>
         </SurfaceCard>
       </View>
     </ScreenContainer>
@@ -83,11 +135,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
+  loadingCard: {
+    minHeight: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  loadingText: {
+    ...typography.body,
+    color: palette.textMuted,
+  },
   featureIcon: {
     width: 44,
     height: 44,
     borderRadius: radius.md,
     backgroundColor: palette.secondarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureIconSecondary: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: palette.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

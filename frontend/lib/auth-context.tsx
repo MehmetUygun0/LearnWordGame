@@ -2,7 +2,14 @@
 import React, { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
-import { AuthSession, AuthUser, getCurrentUserRequest, loginRequest, registerRequest } from '@/services/auth';
+import {
+  AuthSession,
+  AuthUser,
+  getCurrentUserRequest,
+  loginRequest,
+  refreshTokenRequest,
+  registerRequest,
+} from '@/services/auth';
 
 const AUTH_SESSION_KEY = 'learn_word_game_auth_session';
 
@@ -11,6 +18,7 @@ type AuthContextValue = {
   isHydrating: boolean;
   user: AuthUser | null;
   token: string | null;
+  refreshToken: string | null;
   login: (credentials: { userName: string; password: string }) => Promise<AuthUser>;
   register: (credentials: { userName: string; password: string; email?: string }) => Promise<AuthUser>;
   enterDemo: () => Promise<void>;
@@ -22,6 +30,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
 
   useEffect(() => {
@@ -34,20 +43,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const parsedSession = JSON.parse(rawSession) as AuthSession;
 
-        if (!parsedSession?.token) {
+        if (!parsedSession?.accessToken) {
           await SecureStore.deleteItemAsync(AUTH_SESSION_KEY);
           return;
         }
 
         if (parsedSession.mode === 'demo') {
           setUser(parsedSession.user);
-          setToken(parsedSession.token);
+          setToken(parsedSession.accessToken);
+          setRefreshToken(parsedSession.refreshToken);
           return;
         }
 
-        const currentUser = await getCurrentUserRequest(parsedSession.token);
-        setUser(currentUser);
-        setToken(parsedSession.token);
+        try {
+          const profile = await getCurrentUserRequest(parsedSession.accessToken);
+          setUser(profile);
+          setToken(parsedSession.accessToken);
+          setRefreshToken(parsedSession.refreshToken);
+          return;
+        } catch {
+          const refreshedTokens = await refreshTokenRequest({
+            accessToken: parsedSession.accessToken,
+            refreshToken: parsedSession.refreshToken,
+          });
+
+          const profile = await getCurrentUserRequest(refreshedTokens.accessToken);
+          const nextSession: AuthSession = {
+            accessToken: refreshedTokens.accessToken,
+            refreshToken: refreshedTokens.refreshToken,
+            user: profile,
+          };
+
+          await SecureStore.setItemAsync(AUTH_SESSION_KEY, JSON.stringify(nextSession));
+          setUser(profile);
+          setToken(refreshedTokens.accessToken);
+          setRefreshToken(refreshedTokens.refreshToken);
+        }
       } catch {
         await SecureStore.deleteItemAsync(AUTH_SESSION_KEY);
       } finally {
@@ -60,7 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const saveSession = async (session: AuthSession | null) => {
     setUser(session?.user ?? null);
-    setToken(session?.token ?? null);
+    setToken(session?.accessToken ?? null);
+    setRefreshToken(session?.refreshToken ?? null);
 
     if (!session) {
       await SecureStore.deleteItemAsync(AUTH_SESSION_KEY);
@@ -76,24 +108,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isHydrating,
       user,
       token,
+      refreshToken,
       login: async (credentials) => {
-        const session = await loginRequest(credentials);
-        await saveSession(session);
-        return session.user;
+        const tokens = await loginRequest(credentials);
+        const profile = await getCurrentUserRequest(tokens.accessToken);
+        await saveSession({
+          ...tokens,
+          user: profile,
+        });
+        return profile;
       },
       register: async (credentials) => {
-        const session = await registerRequest(credentials);
-        await saveSession(session);
-        return session.user;
+        const tokens = await registerRequest(credentials);
+        const profile = await getCurrentUserRequest(tokens.accessToken);
+        await saveSession({
+          ...tokens,
+          user: profile,
+        });
+        return profile;
       },
       enterDemo: async () => {
         await saveSession({
-          token: 'demo-session',
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          accessToken: 'demo-session',
+          refreshToken: 'demo-refresh',
           mode: 'demo',
           user: {
-            id: 0,
             userName: 'Demo',
+            level: 'A1',
+            totalLearnedWords: 12,
+            dailyNewWords: 6,
+            levelBasedLearnedWords: [
+              { level: 'A1', words: 8 },
+              { level: 'A2', words: 4 },
+            ],
           },
         });
       },
@@ -101,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await saveSession(null);
       },
     }),
-    [isHydrating, token, user]
+    [isHydrating, refreshToken, token, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

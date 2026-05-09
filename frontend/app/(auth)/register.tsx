@@ -24,10 +24,7 @@ export default function RegisterScreen() {
     const trimmedEmail = email.trim();
     const nextErrors = {
       username: username.trim() ? '' : 'Kullanıcı adı zorunlu.',
-      email:
-        !trimmedEmail || /\S+@\S+\.\S+/.test(trimmedEmail)
-          ? ''
-          : 'Geçerli bir e-posta gir.',
+      email: /\S+@\S+\.\S+/.test(trimmedEmail) ? '' : 'Geçerli bir e-posta gir.',
       password:
         password.length >= 6 ? '' : 'Şifre en az 6 karakter olmalı.',
     };
@@ -62,7 +59,7 @@ export default function RegisterScreen() {
       <SectionHeader
         eyebrow="Yeni üye"
         title="Kişisel kelime alanını oluştur."
-        description="Bu form yeni auth kontratına göre body tabanlı kayıt isteği gönderecek şekilde hazırlandı."
+        description="Kayıt sonrası kullanıcı oturumu açılır ve uygulama akışı doğrudan ana ekrana taşınır."
       />
 
       <SurfaceCard>
@@ -74,13 +71,13 @@ export default function RegisterScreen() {
           error={errors.username}
         />
         <AppInput
-          label="E-posta (opsiyonel)"
+          label="E-posta"
           placeholder="mail@ornek.com"
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
           error={errors.email}
-          helperText="Backend bu alanı opsiyonel kabul edecek şekilde tasarlanmalı."
+          helperText="Mevcut backend kayıt isteğinde bu alanı bekliyor."
         />
         <AppInput
           label="Şifre"
@@ -91,6 +88,12 @@ export default function RegisterScreen() {
           error={errors.password}
         />
         <AppButton label="Kayıt Ol" onPress={handleRegister} loading={isSubmitting} />
+      </SurfaceCard>
+
+      <SurfaceCard muted>
+        <Text style={styles.noteTitle}>Kayıt notu</Text>
+        <Text style={styles.noteText}>Form doğrulaması mevcut backend DTO yapısına göre düzenlendi.</Text>
+        <Text style={styles.noteText}>Kayıt başarılı olursa frontend aynı bilgilerle otomatik giriş akışına geçer.</Text>
       </SurfaceCard>
 
       <View style={styles.footerLinks}>
@@ -109,6 +112,14 @@ const styles = StyleSheet.create({
   footerLinks: {
     alignItems: 'center',
     marginBottom: spacing.xl,
+  },
+  noteTitle: {
+    ...typography.cardTitle,
+    color: palette.text,
+  },
+  noteText: {
+    ...typography.body,
+    color: palette.textMuted,
   },
   link: {
     ...typography.label,
