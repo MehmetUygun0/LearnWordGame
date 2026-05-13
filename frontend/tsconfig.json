@@ -3,6 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-native",
+    "skipLibCheck": true,
     "paths": {
       "@/*": [
         "./*"
@@ -15,6 +16,9 @@
     "app/(app)/home.tsx",
     "app/(app)/study.tsx",
     "app/(app)/words.tsx",
+    "app/(app)/word/[id].tsx",
+    "app/(app)/wordle.tsx",
+    "app/(app)/story-lab.tsx",
     "app/(app)/report.tsx",
     "app/(app)/settings.tsx",
     "app/(auth)/_layout.tsx",
@@ -24,8 +28,19 @@
     "app/(auth)/reset-password.tsx",
     "components/ui/AppButton.tsx",
     "components/ui/AppInput.tsx",
+    "components/ui/BackHeader.tsx",
+    "components/ui/AnimatedBackground.tsx",
+    "components/ui/AnimatedCard.tsx",
+    "components/ui/AnimatedNumber.tsx",
+    "components/ui/AnimatedProgressBar.tsx",
+    "components/ui/ConfettiBurst.tsx",
+    "components/ui/FlipTile.tsx",
     "components/ui/ProgressMeter.tsx",
+    "components/ui/PulseIcon.tsx",
+    "components/ui/RevealStageTimeline.tsx",
+    "components/ui/RewardBurst.tsx",
     "components/ui/ScreenContainer.tsx",
+    "components/ui/StageTimeline.tsx",
     "components/ui/StatCard.tsx",
     "components/ui/SectionHeader.tsx",
     "components/ui/SurfaceCard.tsx",

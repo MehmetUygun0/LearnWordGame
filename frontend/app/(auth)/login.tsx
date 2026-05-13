@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import * as ExpoRouter from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AppInput } from '@/components/ui/AppInput';
@@ -50,14 +51,23 @@ export default function LoginScreen() {
   };
 
   return (
-    <ScreenContainer scrollable contentStyle={styles.content}>
+    <ScreenContainer scrollable withBackgroundDecor contentStyle={styles.content}>
       <SectionHeader
         eyebrow="LearnWordGame"
-        title="6 tekrar mantığıyla kelimeleri düzenli çalış."
-        description="Giriş yaptığında günlük kelime havuzuna, çalışma oturumuna ve rapor ekranlarına tek akış içinde geçersin."
+        title="Kelimeleri düzenli tekrarlarla öğren."
+        description="Günlük çalışma planına gir, kartlarını çöz ve ilerlemeni takip et."
       />
 
-      <SurfaceCard>
+      <SurfaceCard accent="secondary">
+        <Text style={styles.noteTitle}>Nasıl çalışır?</Text>
+        <View style={styles.onboardingRow}>
+          <OnboardingStep icon="repeat-outline" title="6 tekrar" text="Doğru bildikçe kelime yeni aralığa taşınır." />
+          <OnboardingStep icon="flame-outline" title="Streak" text="Günlük hedefini bitir, serini büyüt." />
+          <OnboardingStep icon="sparkles-outline" title="Oyun" text="Wordle ve Word Chain ile pekiştir." />
+        </View>
+      </SurfaceCard>
+
+      <SurfaceCard accent="primary">
         <AppInput
           label="Kullanıcı adı"
           placeholder="oguzhanuyar"
@@ -73,10 +83,11 @@ export default function LoginScreen() {
           onChangeText={setPassword}
           error={errors.password}
         />
-        <AppButton label="Giriş Yap" onPress={handleLogin} loading={isSubmitting} />
+        <AppButton label="Giriş yap" icon="log-in-outline" onPress={handleLogin} loading={isSubmitting} />
         <AppButton
-          label="Demo olarak sayfaları aç"
+          label="Hızlıca göz at"
           variant="secondary"
+          icon="sparkles-outline"
           onPress={async () => {
             await enterDemo();
             router.replace('/(app)/home');
@@ -85,10 +96,8 @@ export default function LoginScreen() {
       </SurfaceCard>
 
       <SurfaceCard muted>
-        <Text style={styles.noteTitle}>Bu ekranda hazır olanlar</Text>
-        <Text style={styles.noteText}>Gerçek giriş akışı JWT access token ve refresh token ile çalışacak şekilde hazırlandı.</Text>
-        <Text style={styles.noteText}>Demo girişi yalnızca ekranları hızlıca gezmek için bırakıldı.</Text>
-        <Text style={styles.noteText}>Başarılı girişten sonra kullanıcı doğrudan uygulama sekmelerine yönlendirilir.</Text>
+        <Text style={styles.noteTitle}>Bugün seni bekleyenler</Text>
+        <Text style={styles.noteText}>Kısa çalışma oturumu, kelime havuzu ve ilerleme raporu tek yerde.</Text>
       </SurfaceCard>
 
       <View style={styles.footerLinks}>
@@ -100,6 +109,18 @@ export default function LoginScreen() {
         </Pressable>
       </View>
     </ScreenContainer>
+  );
+}
+
+function OnboardingStep({ icon, title, text }) {
+  return (
+    <View style={styles.onboardingStep}>
+      <View style={styles.onboardingIcon}>
+        <Ionicons name={icon} size={18} color={palette.text} />
+      </View>
+      <Text style={styles.onboardingTitle}>{title}</Text>
+      <Text style={styles.onboardingText}>{text}</Text>
+    </View>
   );
 }
 
@@ -119,6 +140,36 @@ const styles = StyleSheet.create({
   noteText: {
     ...typography.body,
     color: palette.textMuted,
+  },
+  onboardingRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  onboardingStep: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: palette.backgroundElevated,
+    borderWidth: 1,
+    borderColor: palette.borderSoft,
+    padding: spacing.sm,
+    gap: spacing.xs,
+  },
+  onboardingIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: palette.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  onboardingTitle: {
+    ...typography.label,
+    color: palette.text,
+  },
+  onboardingText: {
+    ...typography.caption,
+    color: palette.textMuted,
+    fontSize: 10,
   },
   link: {
     ...typography.label,

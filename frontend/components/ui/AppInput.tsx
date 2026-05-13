@@ -13,9 +13,10 @@ type AppInputProps = {
   keyboardType?: KeyboardTypeOptions;
   error?: string;
   helperText?: string;
+  multiline?: boolean;
+  editable?: boolean;
 };
 
-// Form alanları ileride state/validation ile genişleyecek; görsel temel burada sabitleniyor.
 export function AppInput({
   label,
   value = '',
@@ -25,6 +26,8 @@ export function AppInput({
   keyboardType = 'default',
   error,
   helperText,
+  multiline = false,
+  editable = true,
 }: AppInputProps) {
   return (
     <View style={styles.wrapper}>
@@ -33,10 +36,14 @@ export function AppInput({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={palette.textMuted}
+        placeholderTextColor={palette.textFaint}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
-        style={[styles.input, error && styles.inputError]}
+        multiline={multiline}
+        textAlignVertical={multiline ? 'top' : 'center'}
+        selectionColor={palette.primary}
+        editable={editable}
+        style={[styles.input, multiline && styles.inputMultiline, !editable && styles.inputDisabled, error && styles.inputError]}
       />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {!error && helperText ? <Text style={styles.helperText}>{helperText}</Text> : null}
@@ -50,20 +57,27 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.label,
-    color: palette.text,
+    color: palette.textMuted,
   },
   input: {
     ...typography.body,
-    minHeight: 54,
-    borderRadius: radius.md,
+    minHeight: 52,
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.md,
     color: palette.text,
-    backgroundColor: palette.cardMuted,
+    backgroundColor: palette.backgroundElevated,
     borderWidth: 1,
     borderColor: palette.border,
   },
+  inputMultiline: {
+    minHeight: 92,
+    paddingTop: spacing.md,
+  },
   inputError: {
     borderColor: palette.danger,
+  },
+  inputDisabled: {
+    opacity: 0.68,
   },
   helperText: {
     ...typography.caption,

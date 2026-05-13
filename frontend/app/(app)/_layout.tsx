@@ -2,6 +2,7 @@
 import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, Tabs } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { palette } from '@/constants/theme';
@@ -21,72 +22,100 @@ export default function RootLayout() {
   return (
     <Tabs
       screenOptions={{
-        // Tüm uygulama içi sekmeler aynı görsel dilde kalsın diye stil burada merkezi tutuluyor.
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: palette.backgroundElevated,
-          borderTopWidth: 1,
-          borderTopColor: palette.border,
-          height: 84,
+          backgroundColor: palette.surface,
+          borderTopWidth: 0,
+          height: 88,
+          marginHorizontal: 14,
+          marginBottom: 10,
+          borderRadius: 28,
+          position: 'absolute',
+          borderWidth: 1,
+          borderColor: palette.borderSoft,
           paddingTop: 10,
-          paddingBottom: 12,
+          paddingBottom: 18,
+          paddingHorizontal: 10,
+          overflow: 'hidden',
         },
+        tabBarItemStyle: {
+          borderRadius: 24,
+          minHeight: 58,
+          paddingVertical: 4,
+          marginHorizontal: 2,
+        },
+        tabBarActiveBackgroundColor: 'transparent',
+        tabBarInactiveBackgroundColor: 'transparent',
         sceneStyle: {
           backgroundColor: palette.background,
         },
-        tabBarActiveTintColor: palette.text,
+        tabBarActiveTintColor: palette.primary,
         tabBarInactiveTintColor: palette.textMuted,
         tabBarLabelStyle: {
-          fontFamily: 'Poppins_500Medium',
-          fontSize: 12,
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 11,
+          lineHeight: 15,
         },
       }}>
-      {/* Sprint 1 sonunda kullanıcı göreceği ana sekmeler */}
       <Tabs.Screen
         name="home"
         options={{
           title: 'Ana Sayfa',
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (props) => <TabIcon name="grid-outline" {...props} />,
         }}
       />
       <Tabs.Screen
         name="study"
         options={{
           title: 'Çalış',
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="flash-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (props) => <TabIcon name="flash-outline" {...props} />,
         }}
       />
       <Tabs.Screen
         name="words"
         options={{
-          title: 'Kelimeler',
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="library-outline" size={size} color={color} />
-          ),
+          title: 'Kelime',
+          tabBarIcon: (props) => <TabIcon name="library-outline" {...props} />,
         }}
       />
       <Tabs.Screen
         name="report"
         options={{
           title: 'Rapor',
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="stats-chart-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (props) => <TabIcon name="stats-chart-outline" {...props} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Ayarlar',
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="options-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (props) => <TabIcon name="options-outline" {...props} />,
         }}
       />
+      <Tabs.Screen name="word/[id]" options={{ href: null }} />
+      <Tabs.Screen name="wordle" options={{ href: null }} />
+      <Tabs.Screen name="story-lab" options={{ href: null }} />
     </Tabs>
   );
 }
+
+function TabIcon({ name, color, size, focused }) {
+  return (
+    <View style={[styles.tabIconPill, focused && styles.tabIconPillActive]}>
+      <Ionicons name={name} size={size - 1} color={color} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  tabIconPill: {
+    width: 38,
+    height: 30,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabIconPillActive: {
+    backgroundColor: palette.primarySoft,
+  },
+});

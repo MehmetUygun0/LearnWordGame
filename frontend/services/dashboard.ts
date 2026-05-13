@@ -9,8 +9,13 @@ export type DashboardSummary = {
   level: string;
   learnedWords: number;
   dailyNewWords: number;
+  reviewWordCount: number;
   levelLibraryCount: number;
   todayEstimatedCount: number;
+  progressPercent: number;
+  streakDays: number;
+  xp: number;
+  challengeTitle: string;
   source: 'profile+mock';
 };
 
@@ -27,9 +32,16 @@ export const getDashboardSummary = async (user: AuthUser | null): Promise<Dashbo
     initials: user?.userName?.slice(0, 2).toUpperCase() || 'OU',
     level,
     learnedWords: user?.totalLearnedWords ?? 0,
-    dailyNewWords: user?.dailyNewWords ?? 0,
+    dailyNewWords: user?.dailyNewWords ?? overview.newWordCount,
+    reviewWordCount: overview.reviewWordCount,
     levelLibraryCount: words.length,
     todayEstimatedCount: overview.estimatedTotal,
+    progressPercent: words.length
+      ? Math.min(Math.round(((user?.totalLearnedWords ?? 0) / words.length) * 100), 100)
+      : 0,
+    streakDays: overview.streakDays,
+    xp: overview.xp,
+    challengeTitle: overview.challengeTitle,
     source: 'profile+mock',
   };
 };
