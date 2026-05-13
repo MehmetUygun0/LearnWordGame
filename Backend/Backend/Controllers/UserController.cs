@@ -33,11 +33,11 @@ namespace Backend.Controllers
         {
             byte[] hashedPassword = SHA256.HashPassword(dto.Password);
             User? userFromDb = await _context.Users
-            .Where(u => u.UserName == dto.UserName)
+            .Where(u => u.Email == dto.Email)
             .FirstOrDefaultAsync();
             var listecik = await _context.Users.ToListAsync();
 
-            if (userFromDb != null && userFromDb.Password.SequenceEqual(hashedPassword))
+            if (userFromDb != null)
             {
                 return NotFound(new { message = "Kullanıcı zaten var." });
             }
