@@ -42,4 +42,12 @@
         public required int DailyNewWords { get; set; }
         public required List<ProfileLevelStatDto> LevelBasedLearnedWords { get; set; }
     }
+    public class UpdateDailyWordsDto
+    {
+        public required int DailyNewWords { get; set; }
+    }
+    public class UpdatelevelDto
+    {
+        public required string Level { get; set; }
+    }
 }
