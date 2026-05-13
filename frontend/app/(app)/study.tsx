@@ -201,7 +201,7 @@ export default function StudyScreen() {
         <Text style={styles.progressTitle}>Oturum akışı</Text>
         <Text style={styles.progressText}>Backend’de ayrı study endpoint’i henüz yok. Bu yüzden ekran şu an kullanıcı seviyesi + kelime havuzu verisini kullanarak çalışma akışını simüle ediyor.</Text>
         <Text style={styles.progressMeta}>
-          Hedef: {overview?.newWordCount ?? user?.dailyNewWords ?? studyWords.length || 0} yeni kelime
+          Hedef: {overview?.newWordCount ?? user?.dailyNewWords ?? studyWords.length} yeni kelime
         </Text>
         <Text style={styles.progressMeta}>Tahmini toplam kart: {overview?.estimatedTotal ?? studyWords.length}</Text>
         <Text style={styles.progressMeta}>Anlık doğru sayısı: {correctCount}</Text>
