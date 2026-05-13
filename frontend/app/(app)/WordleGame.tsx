@@ -12,11 +12,9 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
-  ScrollView,
-  Alert,
 } from "react-native";
-import config from "./lib/config";
-import { useAuth } from "./lib/auth-context";
+import config from "../../lib/config";
+import { useAuth } from "../../lib/auth-context";
 
 // ── Config ──────────────────────────────────────────────────────────
 const API_BASE = config.API_URL;

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 import {
   AuthSession,
@@ -12,6 +13,32 @@ import {
 } from '@/services/auth';
 
 const AUTH_SESSION_KEY = 'learn_word_game_auth_session';
+
+const readStoredSession = async () => {
+  if (Platform.OS === 'web') {
+    return globalThis.localStorage?.getItem(AUTH_SESSION_KEY) ?? null;
+  }
+
+  return SecureStore.getItemAsync(AUTH_SESSION_KEY);
+};
+
+const writeStoredSession = async (value: string) => {
+  if (Platform.OS === 'web') {
+    globalThis.localStorage?.setItem(AUTH_SESSION_KEY, value);
+    return;
+  }
+
+  await SecureStore.setItemAsync(AUTH_SESSION_KEY, value);
+};
+
+const clearStoredSession = async () => {
+  if (Platform.OS === 'web') {
+    globalThis.localStorage?.removeItem(AUTH_SESSION_KEY);
+    return;
+  }
+
+  await SecureStore.deleteItemAsync(AUTH_SESSION_KEY);
+};
 
 type AuthContextValue = {
   isAuthenticated: boolean;
@@ -36,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const hydrateSession = async () => {
       try {
-        const rawSession = await SecureStore.getItemAsync(AUTH_SESSION_KEY);
+        const rawSession = await readStoredSession();
         if (!rawSession) {
           return;
         }
@@ -44,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const parsedSession = JSON.parse(rawSession) as AuthSession;
 
         if (!parsedSession?.accessToken) {
-          await SecureStore.deleteItemAsync(AUTH_SESSION_KEY);
+          await clearStoredSession();
           return;
         }
 
@@ -74,13 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user: profile,
           };
 
-          await SecureStore.setItemAsync(AUTH_SESSION_KEY, JSON.stringify(nextSession));
+          await writeStoredSession(JSON.stringify(nextSession));
           setUser(profile);
           setToken(refreshedTokens.accessToken);
           setRefreshToken(refreshedTokens.refreshToken);
         }
       } catch {
-        await SecureStore.deleteItemAsync(AUTH_SESSION_KEY);
+        await clearStoredSession();
       } finally {
         setIsHydrating(false);
       }
@@ -95,11 +122,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRefreshToken(session?.refreshToken ?? null);
 
     if (!session) {
-      await SecureStore.deleteItemAsync(AUTH_SESSION_KEY);
+      await clearStoredSession();
       return;
     }
 
-    await SecureStore.setItemAsync(AUTH_SESSION_KEY, JSON.stringify(session));
+    await writeStoredSession(JSON.stringify(session));
   };
 
   const value = useMemo<AuthContextValue>(
