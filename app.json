@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "LearnWordGame",
+    "slug": "learnwordgame-frontend",
+    "scheme": "learnwordgame",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

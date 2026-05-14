@@ -1,0 +1,19 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-native"
+  },
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "constants/**/*.ts",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "services/**/*.ts",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
+  ]
+}
