@@ -6,8 +6,8 @@ import { AppInput } from "../../components/ui/AppInput";
 import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
-import { getStudyOverview, getTodayStudySet, evaluateAnswer, StudyQuestion } from "../../services/study";
 import { palette, radius, spacing, typography } from "../../constants/theme";
+import { evaluateAnswer, getStudyOverview, getTodayStudySet, StudyQuestion } from "../../services/study";
 
 export default function StudyScreen() {
   const [questions, setQuestions] = useState<StudyQuestion[]>([]);
@@ -47,20 +47,30 @@ export default function StudyScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <SectionHeader eyebrow="Story 3" title="6 tekrar quiz oturumu" description="Yanlis cevapta stage sifirlanir, dogru cevapta sonraki review araligina gecilir." />
+      <SectionHeader
+        eyebrow="Story 3"
+        title="6 tekrar quiz oturumu"
+        description="Yanlis cevapta stage sifirlanir, dogru cevapta sonraki review araligina gecilir."
+      />
       <SurfaceCard muted>
-        <Text style={styles.meta}>Yeni: {overview.todayNewWords} • Tekrar: {overview.todayReviewWords} • Toplam: {overview.totalQuestions}</Text>
+        <Text style={styles.meta}>
+          Yeni: {overview.todayNewWords} - Tekrar: {overview.todayReviewWords} - Toplam: {overview.totalQuestions}
+        </Text>
       </SurfaceCard>
       {isDone ? (
         <SurfaceCard>
           <Text style={styles.title}>Oturum tamamlandi</Text>
-          <Text style={styles.body}>Dogru sayisi: {correctCount} / {questions.length}</Text>
+          <Text style={styles.body}>
+            Dogru sayisi: {correctCount} / {questions.length}
+          </Text>
         </SurfaceCard>
       ) : currentQuestion ? (
         <SurfaceCard>
           <View style={styles.badgeRow}>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>Sira {currentIndex + 1} / {questions.length}</Text>
+              <Text style={styles.badgeText}>
+                Sira {currentIndex + 1} / {questions.length}
+              </Text>
             </View>
             <Text style={styles.stage}>Stage {currentQuestion.stage}</Text>
           </View>

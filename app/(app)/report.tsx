@@ -6,8 +6,8 @@ import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { StatCard } from "../../components/ui/StatCard";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
-import { getReportSummary } from "../../services/report";
 import { palette, radius, spacing, typography } from "../../constants/theme";
+import { getReportSummary } from "../../services/report";
 
 export default function ReportScreen() {
   const [summary, setSummary] = useState({
@@ -28,7 +28,11 @@ export default function ReportScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <SectionHeader eyebrow="Story 5" title="Analiz ve rapor" description="Yuzdesel basari, haftalik trend, stage dagilimi ve cikti aksiyonu burada." />
+      <SectionHeader
+        eyebrow="Story 5"
+        title="Analiz ve rapor"
+        description="Yuzdesel basari, haftalik trend, stage dagilimi ve cikti aksiyonu burada."
+      />
       <View style={styles.stats}>
         <StatCard eyebrow="Ogrenilen" value={`${summary.learnedCount} kelime`} />
         <StatCard eyebrow="Surecte" value={`${summary.inProgressCount} kelime`} accent="secondary" />
@@ -50,12 +54,16 @@ export default function ReportScreen() {
       <SurfaceCard muted>
         <Text style={styles.title}>Stage dagilimi</Text>
         {summary.stageDistribution.map((item) => (
-          <Text key={item.label} style={styles.body}>{item.label}: {item.value}</Text>
+          <Text key={item.label} style={styles.body}>
+            {item.label}: {item.value}
+          </Text>
         ))}
       </SurfaceCard>
       <SurfaceCard muted>
         <Text style={styles.title}>Yazdirilabilir rapor</Text>
-        <Text style={styles.body}>Dokumanda istenen kagit cikti akisina uygun olarak bu buton yazdirma aksiyonunu temsil eder.</Text>
+        <Text style={styles.body}>
+          Dokumanda istenen kagit cikti akisina uygun olarak bu buton yazdirma aksiyonunu temsil eder.
+        </Text>
         {printMessage ? <Text style={styles.success}>{printMessage}</Text> : null}
         <AppButton label="Rapor ciktisi al" variant="secondary" onPress={() => setPrintMessage("Rapor ciktisi hazirlandi.")} />
       </SurfaceCard>
