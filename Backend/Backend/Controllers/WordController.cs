@@ -91,14 +91,15 @@ namespace Backend.Controllers
 
             var lastProgressWords = await _context.UserWordProgresses
                 .Where(x => x.UserId == userId && x.NextReviewDate <= DateTime.UtcNow.Date)
-                .OrderByDescending(x => x.NextReviewDate).ThenBy(x => x.ReviewCount)
+                .Include(x => x.Word).ThenInclude(w => w.WordSamples)
+                .OrderBy(x => x.NextReviewDate).ThenBy(x => x.ReviewCount)
                 .ToListAsync();
-            foreach (var item in lastProgressWords)
-            {
-                item.ReviewCount++;
-            }
-            int lastReviewCount = lastProgressWords.Count == 0 ? 0 : lastProgressWords.First().ReviewCount;
-            var necessarylastProgressWords = lastProgressWords.Where(x => x.ReviewCount == lastReviewCount).Select(word => new WordDTO
+            if (lastProgressWords.Count == 0)
+                return NotFound();
+            int lastReviewCount = lastProgressWords.First().ReviewCount;
+            DateTime? lastNextReviewDate = lastProgressWords.First().NextReviewDate;
+
+            var necessarylastProgressWords = lastProgressWords.Where(x => x.ReviewCount == lastReviewCount && x.NextReviewDate == lastNextReviewDate).Select(word => new WordDTO
             {
                 WordId = word.WordId,
                 EngWordName = word.Word.EngWordName,
@@ -190,7 +191,7 @@ namespace Backend.Controllers
                 progressItem.LastCorrectDate = dtoItem.IsCorrect ? DateTime.UtcNow : (DateTime?)null;
                 progressItem.NextReviewDate = dtoItem.IsCorrect ? GetNextReviewDate(progressItem.CurrentStep) : DateTime.UtcNow.AddDays(2);
                 progressItem.CurrentStep = dtoItem.IsCorrect ? progressItem.CurrentStep + 1 : Step.Start;
-                progressItem.ReviewCount++;//burda kaldık
+                progressItem.ReviewCount += dtoItem.IsCorrect ? 1 : 0;
                 progressItem.IsLearned = progressItem.CurrentStep > Step.Step5;
             }
             await _context.SaveChangesAsync();
