@@ -94,10 +94,10 @@ namespace Backend.Controllers
                 .Include(x => x.Word).ThenInclude(w => w.WordSamples)
                 .OrderBy(x => x.NextReviewDate).ThenBy(x => x.ReviewCount)
                 .ToListAsync();
-            if (lastProgressWords.Count == 0)
-                return NotFound();
-            int lastReviewCount = lastProgressWords.First().ReviewCount;
-            DateTime? lastNextReviewDate = lastProgressWords.First().NextReviewDate;
+
+            int lastReviewCount = lastProgressWords.Count() == 0 ? 0 : lastProgressWords.First().ReviewCount;
+            DateTime? lastNextReviewDate = lastProgressWords.Count() == 0 ? lastProgressWords.First().NextReviewDate : DateTime.MinValue;
+
 
             var necessarylastProgressWords = lastProgressWords.Where(x => x.ReviewCount == lastReviewCount && x.NextReviewDate == lastNextReviewDate).Select(word => new WordDTO
             {
