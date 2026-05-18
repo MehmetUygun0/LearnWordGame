@@ -59,6 +59,30 @@ Expo tabanlı mobil istemci.
 - TypeScript
 - React 19
 
+## Docker ile Çalıştırma
+
+Projeyi ekip içinde aynı sürümlerle ayağa kaldırmak için kök klasörde çalıştırın:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Bu komut üç servisi başlatır:
+
+- `db`: SQL Server 2022, verileri `sqlvolume` Docker volume'unda tutar
+- `backend`: ASP.NET Core API, host makinede `http://localhost:5000`
+- `mobile`: Expo geliştirme sunucusu, host makinede `http://localhost:8081`
+
+Android emulator backend'e `http://10.0.2.2:5000` üzerinden ulaşır. iOS simulator ve web için varsayılan adres `http://localhost:5000` olur. Fiziksel telefonda Expo QR ile test ederken `.env` içindeki `EXPO_PUBLIC_API_URL` değerini bilgisayarınızın yerel ağ IP adresiyle değiştirin:
+
+```bash
+EXPO_PUBLIC_API_URL=http://192.168.1.25:5000
+REACT_NATIVE_PACKAGER_HOSTNAME=192.168.1.25
+```
+
+Docker backend ve veritabanı sürüm farklılıklarını büyük ölçüde çözer. Mobil tarafta ise Expo Go / emulator / cihaz SDK uyumu hâlâ önemlidir; bu yüzden Node ve npm bağımlılıkları Docker içinde sabitlense bile fiziksel cihazdaki Expo sürümünün proje SDK'sı ile uyumlu olması gerekir.
+
 ## Mevcut Durum
 
 Şu an backend tarafında temel kullanıcı kayıt ve giriş mantığı var. Frontend tarafında ise ürün akışından çok başlangıç şablonu ve deneme ekranları bulunuyor. Yani proje fikri net, fakat PDF'teki tüm story'leri karşılayan ürün henüz tamamlanmış değil.

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import config from '@/lib/config';
 import { apiRequest, getErrorMessage, readResponsePayload } from '@/lib/api';
+
 export type WordLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 
 export type WordListItem = {
@@ -11,6 +12,20 @@ export type WordListItem = {
   pictureUrl?: string | null;
   audioUrl?: string | null;
   samples: string[];
+  stage?: number;
+  successCount?: number;
+  wrongCount?: number;
+  lastResult?: 'correct' | 'wrong' | 'new';
+  nextReviewLabel?: string;
+};
+
+export type WordDraft = {
+  engWordName: string;
+  turWordName: string;
+  level: WordLevel;
+  samples: string[];
+  generatedImageUrl?: string | null;
+  audioUrl?: string | null;
 };
 
 const mockWords: WordListItem[] = [
@@ -21,7 +36,12 @@ const mockWords: WordListItem[] = [
     level: 'B1',
     pictureUrl: null,
     audioUrl: null,
-    samples: ['He had to abandon the car in the snow.'],
+    samples: ['He had to abandon the car in the snow.', 'Never abandon your plan too early.'],
+    stage: 3,
+    successCount: 4,
+    wrongCount: 2,
+    lastResult: 'wrong',
+    nextReviewLabel: 'Bugün',
   },
   {
     id: 2,
@@ -30,7 +50,12 @@ const mockWords: WordListItem[] = [
     level: 'A2',
     pictureUrl: null,
     audioUrl: null,
-    samples: ['The journey took three hours.'],
+    samples: ['The journey took three hours.', 'Learning is a long journey.'],
+    stage: 4,
+    successCount: 7,
+    wrongCount: 1,
+    lastResult: 'correct',
+    nextReviewLabel: '1 hafta',
   },
   {
     id: 3,
@@ -39,7 +64,12 @@ const mockWords: WordListItem[] = [
     level: 'A1',
     pictureUrl: null,
     audioUrl: null,
-    samples: ['This route is shorter than the old one.'],
+    samples: ['This route is shorter than the old one.', 'We changed our route.'],
+    stage: 2,
+    successCount: 3,
+    wrongCount: 0,
+    lastResult: 'correct',
+    nextReviewLabel: 'Yarın',
   },
   {
     id: 4,
@@ -49,6 +79,11 @@ const mockWords: WordListItem[] = [
     pictureUrl: null,
     audioUrl: null,
     samples: ['Children are often more resilient than adults expect.'],
+    stage: 1,
+    successCount: 1,
+    wrongCount: 3,
+    lastResult: 'wrong',
+    nextReviewLabel: 'Bugün',
   },
   {
     id: 5,
@@ -58,82 +93,177 @@ const mockWords: WordListItem[] = [
     pictureUrl: null,
     audioUrl: null,
     samples: ['She can articulate her ideas clearly.'],
+    stage: 5,
+    successCount: 8,
+    wrongCount: 1,
+    lastResult: 'correct',
+    nextReviewLabel: '1 ay',
   },
 ];
 
 const levelOrder: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
-const userAddedWords: WordListItem[] = [];
+const userCreatedWords: WordListItem[] = [];
 
-export const getWords = async () => {
-  // Backend tarafında henüz liste endpoint'i olmadığı için ekran fallback kelime havuzu ile çalışıyor.
-  return [...userAddedWords, ...mockWords].map(normalizeWord).sort(sortByLevel);
-};
-
-export const addWord = async ({
-  engWordName,
-  turWordName,
-  picture,
-  level,
-  samples,
-  token,
-}: {
-  engWordName: string;
-  turWordName: string;
-  picture?: string;
-  level: WordLevel;
-  samples: string[];
-  token?: string | null;
-}) => {
-  const nextWord = normalizeWord({
-    id: Date.now(),
-    engWordName: engWordName.trim(),
-    turWordName: turWordName.trim(),
-    pictureUrl: picture?.trim() || null,
-    level,
-    samples: samples.map((sample) => sample.trim()).filter(Boolean),
-  });
-
+export const getWords = async (token?: string | null) => {
   if (token && token !== 'demo-session') {
     const response = await apiRequest({
-      endpoint: config.ENDPOINTS.WORDS.ADD,
+      endpoint: config.ENDPOINTS.WORDS.MY_WORDS,
+      method: 'GET',
+      token,
+    });
+
+    const payload = await readResponsePayload(response);
+
+    if (response.ok && Array.isArray(payload)) {
+      return payload.map(normalizeWord).sort(sortByLevel);
+    }
+  }
+
+  return [...userCreatedWords, ...mockWords.map(normalizeWord)].sort(sortByLevel);
+};
+
+export const getDailyWords = async (token?: string | null) => {
+  if (token && token !== 'demo-session') {
+    const response = await apiRequest({
+      endpoint: config.ENDPOINTS.WORDS.DAILY_WORD,
       method: 'POST',
       token,
-      body: JSON.stringify({
-        engWordName: nextWord.engWordName,
-        turWordName: nextWord.turWordName,
-        picture: nextWord.pictureUrl,
-        level: nextWord.level,
-        samples: nextWord.samples,
-      }),
     });
 
     const payload = await readResponsePayload(response);
 
     if (!response.ok) {
-      throw new Error(getErrorMessage(payload, 'Kelime eklenemedi.'));
+      throw new Error(getErrorMessage(payload, 'Günlük kelimeler alınamadı.'));
     }
 
-    if (payload && typeof payload === 'object' && typeof payload.id === 'number') {
-      nextWord.id = payload.id;
+    if (Array.isArray(payload)) {
+      return payload.map(normalizeWord).sort(sortByLevel);
     }
   }
 
-  userAddedWords.unshift(nextWord);
-  return nextWord;
+  return getWords(token);
+};
+
+export const saveWordTestResults = async ({
+  token,
+  results,
+}: {
+  token?: string | null;
+  results: { wordId: number; isCorrect: boolean }[];
+}) => {
+  if (!token || token === 'demo-session' || !results.length) {
+    return;
+  }
+
+  const response = await apiRequest({
+    endpoint: config.ENDPOINTS.WORDS.TEST_RESULT,
+    method: 'POST',
+    token,
+    body: JSON.stringify(results),
+  });
+
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, 'Test sonucu kaydedilemedi.'));
+  }
+};
+
+export const getWordById = async (id: number | string, token?: string | null) => {
+  const words = await getWords(token);
+  return words.find((word) => String(word.id) === String(id)) ?? words[0];
+};
+
+export const createWordPreview = async (draft: WordDraft): Promise<WordListItem> => {
+  const word = normalizeWord({
+    id: Date.now(),
+    engWordName: draft.engWordName,
+    turWordName: draft.turWordName,
+    level: draft.level,
+    pictureUrl: draft.generatedImageUrl ?? null,
+    audioUrl: draft.audioUrl ?? null,
+    samples: draft.samples,
+    stage: 0,
+    successCount: 0,
+    wrongCount: 0,
+    lastResult: 'new',
+    nextReviewLabel: 'Yeni',
+  });
+
+  userCreatedWords.unshift(word);
+
+  return word;
+};
+
+export const createUserWord = async ({
+  draft,
+  token,
+}: {
+  draft: WordDraft;
+  token?: string | null;
+}): Promise<WordListItem> => {
+  if (!token || token === 'demo-session') {
+    return createWordPreview(draft);
+  }
+
+  const response = await apiRequest({
+    endpoint: config.ENDPOINTS.WORDS.ADD,
+    method: 'POST',
+    token,
+    body: JSON.stringify({
+      engWordName: draft.engWordName.trim(),
+      turWordName: draft.turWordName.trim(),
+      level: draft.level,
+      picture: draft.generatedImageUrl ?? null,
+      samples: draft.samples,
+    }),
+  });
+
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, 'Kelime backend tarafına kaydedilemedi.'));
+  }
+
+  const word = normalizeWord({
+    id: payload?.id ?? Date.now(),
+    engWordName: draft.engWordName,
+    turWordName: draft.turWordName,
+    level: draft.level,
+    pictureUrl: draft.generatedImageUrl ?? null,
+    audioUrl: draft.audioUrl ?? null,
+    samples: draft.samples,
+    stage: 0,
+    successCount: 0,
+    wrongCount: 0,
+    lastResult: 'new',
+    nextReviewLabel: 'Yeni',
+  });
+
+  userCreatedWords.unshift(word);
+
+  return word;
 };
 
 const normalizeWord = (item: any): WordListItem => ({
-  id: Number(item.id),
+  id: Number(item.id ?? item.wordId),
   engWordName: String(item.engWordName ?? item.englishWord ?? ''),
   turWordName: String(item.turWordName ?? item.turkishWord ?? ''),
   level: normalizeLevel(item.level),
-  pictureUrl: item.pictureUrl ?? item.picture ?? null,
-  audioUrl: item.audioUrl ?? null,
+  pictureUrl: item.pictureUrl ?? item.picture ?? item.pictureUri ?? null,
+  audioUrl: item.audioUrl ?? item.audioUri ?? null,
   samples: Array.isArray(item.samples)
-    ? item.samples.map((sample: unknown) => String(sample))
+    ? item.samples.map((sample: unknown) => String(sample)).filter(Boolean)
     : Array.isArray(item.wordSamples)
-      ? item.wordSamples.map((sample: any) => String(sample.samples ?? sample))
+      ? item.wordSamples
+          .map((sample: any) => String(sample.samples ?? sample.engSamples ?? sample.turSamples ?? sample))
+          .filter(Boolean)
       : [],
+  stage: Math.max(0, Math.min(Number(item.stage ?? item.successStage ?? item.currentStep ?? 0), 6)),
+  successCount: Number(item.successCount ?? 0),
+  wrongCount: Number(item.wrongCount ?? 0),
+  lastResult: item.lastResult ?? 'new',
+  nextReviewLabel: item.nextReviewLabel ?? 'Yeni',
 });
 
 const normalizeLevel = (level: unknown): WordLevel => {
@@ -147,8 +277,8 @@ const normalizeLevel = (level: unknown): WordLevel => {
 const sortByLevel = (left: WordListItem, right: WordListItem) =>
   levelOrder.indexOf(left.level) - levelOrder.indexOf(right.level);
 
-export const getWordsForLevel = async (level?: string) => {
-  const words = await getWords();
+export const getWordsForLevel = async (level?: string, token?: string | null) => {
+  const words = await getWords(token);
 
   if (!level || !levelOrder.includes(level as WordLevel)) {
     return words;

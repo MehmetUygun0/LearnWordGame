@@ -1,4 +1,6 @@
 // @ts-nocheck
+import config from '@/lib/config';
+import { apiRequest, readResponsePayload } from '@/lib/api';
 import { WordListItem, getWords } from '@/services/words';
 
 export type WordChainResult = {
@@ -6,12 +8,31 @@ export type WordChainResult = {
   story: string;
   imagePrompt: string;
   imageUri: string;
-  source: 'local';
+  source: 'api' | 'local';
 };
 
 const fallbackChain = ['brain', 'night', 'tiger', 'robin', 'noble'];
 
-export const createWordChain = async (): Promise<WordChainResult> => {
+export const createWordChain = async (token?: string | null): Promise<WordChainResult> => {
+  if (token && token !== 'demo-session') {
+    const response = await apiRequest({
+      endpoint: config.ENDPOINTS.WORD_CHAIN.GET,
+      method: 'GET',
+      token,
+    });
+    const payload = await readResponsePayload(response);
+
+    if (response.ok && payload?.story) {
+      return {
+        words: [],
+        story: String(payload.story),
+        imagePrompt: 'Backend LLM ve görsel çıktısı',
+        imageUri: payload.image ? `data:image/png;base64,${payload.image}` : '',
+        source: 'api',
+      };
+    }
+  }
+
   const words = await getWords();
   const chainWords = buildChain(words);
   const labels = chainWords.map((word) => word.engWordName);

@@ -1,123 +1,143 @@
 // @ts-nocheck
 import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { palette, radius, spacing, typography } from '@/constants/theme';
 import { WordListItem } from '@/services/words';
 
 type WordCardProps = {
   word: WordListItem;
+  onPress?: () => void;
 };
 
-// Kelime kartı backend görsel/ses alanları boş gelse bile tutarlı bir görünüm koruyor.
-export function WordCard({ word }: WordCardProps) {
-  const sample = word.samples[0] || 'Örnek cümle backend akışından geldiğinde burada görünecek.';
+export function WordCard({ word, onPress }: WordCardProps) {
+  const sample = word.samples[0] || 'Bu kelime için örnek cümle eklenebilir.';
 
   return (
-    <View style={styles.card}>
-      <View style={styles.preview}>
-        <Ionicons name="book-outline" size={22} color={palette.text} />
-        <Text style={styles.previewText}>
-          {word.pictureUrl ? 'Görsel hazır' : 'Varsayılan görsel'}
-        </Text>
-      </View>
-
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
+      <View pointerEvents="none" style={styles.topLine} />
+      {word.pictureUrl ? (
+        <Image source={{ uri: word.pictureUrl }} style={styles.thumbnail} resizeMode="cover" />
+      ) : (
+        <View style={styles.iconBox}>
+          <Ionicons name="sparkles-outline" size={19} color={palette.text} />
+        </View>
+      )}
       <View style={styles.body}>
         <View style={styles.titleRow}>
-          <Text style={styles.english}>{word.engWordName}</Text>
+          <View style={styles.wordBlock}>
+            <Text style={styles.english} numberOfLines={1}>{word.engWordName}</Text>
+            <Text style={styles.turkish} numberOfLines={1}>{word.turWordName}</Text>
+          </View>
           <View style={styles.levelBadge}>
             <Text style={styles.levelText}>{word.level}</Text>
           </View>
         </View>
-        <Text style={styles.turkish}>{word.turWordName}</Text>
-        <Text style={styles.sample}>{sample}</Text>
-
+        <Text style={styles.sample} numberOfLines={2}>{sample}</Text>
         <View style={styles.footerRow}>
           <View style={styles.infoChip}>
-            <Ionicons name="volume-medium-outline" size={14} color={palette.textMuted} />
-            <Text style={styles.infoText}>
-              {word.audioUrl ? 'Ses hazır' : 'Varsayılan ses'}
-            </Text>
+            <Ionicons name="image-outline" size={13} color={palette.textFaint} />
+            <Text style={styles.infoText}>{word.pictureUrl ? 'Görsel' : 'Görsel yok'}</Text>
           </View>
           <View style={styles.infoChip}>
-            <Ionicons name="document-text-outline" size={14} color={palette.textMuted} />
-            <Text style={styles.infoText}>{word.samples.length || 1} cümle</Text>
+            <Ionicons name="volume-medium-outline" size={13} color={palette.textFaint} />
+            <Text style={styles.infoText}>{word.audioUrl ? 'Ses' : 'Ses yok'}</Text>
           </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
+    flexDirection: 'row',
+    gap: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: palette.cardMuted,
+    backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: palette.borderSoft,
+    padding: spacing.md,
     overflow: 'hidden',
   },
-  preview: {
-    minHeight: 110,
-    backgroundColor: palette.primarySoft,
+  cardPressed: {
+    transform: [{ scale: 0.98 }],
+    opacity: 0.92,
+  },
+  topLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: palette.electric,
+  },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: palette.electric,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
   },
-  previewText: {
-    ...typography.caption,
-    color: palette.textMuted,
+  thumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: palette.backgroundElevated,
   },
   body: {
-    padding: spacing.md,
+    flex: 1,
     gap: spacing.sm,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.sm,
   },
-  english: {
-    ...typography.title,
-    color: palette.text,
+  wordBlock: {
     flex: 1,
+  },
+  english: {
+    ...typography.cardTitle,
+    color: palette.text,
+  },
+  turkish: {
+    ...typography.body,
+    color: palette.textMuted,
   },
   levelBadge: {
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
+    paddingVertical: 5,
     backgroundColor: palette.secondarySoft,
   },
   levelText: {
     ...typography.caption,
-    color: palette.text,
-  },
-  turkish: {
-    ...typography.cardTitle,
-    color: palette.textMuted,
+    color: palette.secondary,
   },
   sample: {
-    ...typography.body,
+    ...typography.caption,
     color: palette.textFaint,
   },
   footerRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   infoChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
+    paddingVertical: 5,
     backgroundColor: palette.backgroundElevated,
   },
   infoText: {
     ...typography.caption,
-    color: palette.textMuted,
+    color: palette.textFaint,
   },
 });

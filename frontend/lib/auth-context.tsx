@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             userName: 'Demo',
             level: 'A1',
             totalLearnedWords: 12,
-            dailyNewWords: 6,
+            dailyNewWords: 10,
             levelBasedLearnedWords: [
               { level: 'A1', words: 8 },
               { level: 'A2', words: 4 },

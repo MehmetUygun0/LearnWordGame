@@ -2,25 +2,28 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 type StatCardProps = {
   eyebrow: string;
   value: string;
-  accent?: 'primary' | 'secondary';
+  detail?: string;
+  accent?: 'primary' | 'secondary' | 'accent' | 'success' | 'electric';
 };
 
 export function StatCard({
   eyebrow,
   value,
+  detail,
   accent = 'primary',
 }: StatCardProps) {
   return (
-    <View style={[styles.card, shadows.soft]}>
-      <View style={[styles.badge, accent === 'secondary' && styles.badgeSecondary]}>
-        <Text style={styles.badgeText}>{eyebrow}</Text>
-      </View>
-      <Text style={styles.value}>{value}</Text>
+    <View style={styles.card}>
+      <View style={[styles.glow, glowStyles[accent]]} />
+      <View style={[styles.marker, markerStyles[accent]]} />
+      <Text style={styles.eyebrow} numberOfLines={1}>{eyebrow}</Text>
+      <Text style={styles.value} numberOfLines={2}>{value}</Text>
+      {detail ? <Text style={styles.detail} numberOfLines={2}>{detail}</Text> : null}
     </View>
   );
 }
@@ -28,30 +31,77 @@ export function StatCard({
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    minHeight: 116,
+    minHeight: 108,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    backgroundColor: palette.card,
+    backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: palette.border,
-    gap: spacing.sm,
+    borderColor: palette.borderSoft,
+    gap: spacing.xs,
+    overflow: 'hidden',
   },
-  badge: {
-    alignSelf: 'flex-start',
+  glow: {
+    position: 'absolute',
+    top: -20,
+    right: -18,
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    opacity: 0.18,
+    transform: [{ rotate: '18deg' }],
+  },
+  marker: {
+    width: 34,
+    height: 5,
     borderRadius: radius.pill,
-    backgroundColor: palette.primarySoft,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
+    marginBottom: 2,
   },
-  badgeSecondary: {
-    backgroundColor: palette.secondarySoft,
-  },
-  badgeText: {
+  eyebrow: {
     ...typography.caption,
-    color: palette.text,
+    color: palette.textFaint,
   },
   value: {
-    ...typography.title,
+    ...typography.cardTitle,
     color: palette.text,
+  },
+  detail: {
+    ...typography.caption,
+    color: palette.textMuted,
+  },
+});
+
+const markerStyles = StyleSheet.create({
+  primary: {
+    backgroundColor: palette.primary,
+  },
+  secondary: {
+    backgroundColor: palette.secondary,
+  },
+  accent: {
+    backgroundColor: palette.accent,
+  },
+  success: {
+    backgroundColor: palette.success,
+  },
+  electric: {
+    backgroundColor: palette.electric,
+  },
+});
+
+const glowStyles = StyleSheet.create({
+  primary: {
+    backgroundColor: palette.primary,
+  },
+  secondary: {
+    backgroundColor: palette.secondary,
+  },
+  accent: {
+    backgroundColor: palette.accent,
+  },
+  success: {
+    backgroundColor: palette.success,
+  },
+  electric: {
+    backgroundColor: palette.electric,
   },
 });
