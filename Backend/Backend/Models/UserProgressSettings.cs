@@ -22,6 +22,6 @@ namespace Backend.Models
         public DateTime LastDailyWord { get; set; } = DateTime.MinValue;
         public int TotalWordsLearned { get; set; } = 0;
         public int NumberOfNewWords { get; set; } = 10;
-        public int WordCount { get; set; } = 0;
+        public int SkipCount { get; set; } = 0;
     }
 }

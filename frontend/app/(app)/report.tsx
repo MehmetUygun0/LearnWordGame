@@ -15,7 +15,7 @@ import { palette, radius, spacing, typography } from '@/constants/theme';
 import { getReportSummary, ReportSummary } from '@/services/report';
 
 export default function ReportScreen() {
-  const { user } = useAuth();
+  const { token, user } = useAuth();
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [exportNotice, setExportNotice] = useState('');
@@ -23,7 +23,7 @@ export default function ReportScreen() {
   useEffect(() => {
     const loadSummary = async () => {
       try {
-        const nextSummary = await getReportSummary(user);
+        const nextSummary = await getReportSummary(user, token);
         setSummary(nextSummary);
       } finally {
         setIsLoading(false);
@@ -31,7 +31,7 @@ export default function ReportScreen() {
     };
 
     loadSummary();
-  }, [user]);
+  }, [token, user]);
 
   const levelStats = summary?.levelStats ?? [];
   const maxWords = Math.max(...levelStats.map((item) => item.words), 1);

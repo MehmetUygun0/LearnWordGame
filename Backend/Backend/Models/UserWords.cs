@@ -8,7 +8,7 @@ namespace Backend.Models
         public int Id { get; set; }
 
         [Required]
-        public int UserId { get; set; } 
+        public int UserId { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -17,8 +17,6 @@ namespace Backend.Models
         [Required]
         [StringLength(100)]
         public string TurWordName { get; set; } = null!;
-
-        public string? Picture { get; set; }
 
         [MaxLength(20)]
         public string Level { get; set; } = "UserAdded";

@@ -11,22 +11,24 @@ import { RevealStageTimeline } from '@/components/ui/RevealStageTimeline';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 import { getWordById, WordListItem } from '@/services/words';
 
 export default function WordDetailScreen() {
   const router = ExpoRouter.useRouter();
   const { id } = ExpoRouter.useLocalSearchParams();
+  const { token } = useAuth();
   const [word, setWord] = useState<WordListItem | null>(null);
 
   useEffect(() => {
     const loadWord = async () => {
-      const nextWord = await getWordById(String(id));
+      const nextWord = await getWordById(String(id), token);
       setWord(nextWord);
     };
 
     loadWord();
-  }, [id]);
+  }, [id, token]);
 
   if (!word) {
     return (

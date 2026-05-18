@@ -11,7 +11,9 @@ namespace Backend.Models
         public int WordID { get; set; }
 
         [Required]
-        public required string Samples { get; set; } // Örnek cümle
+        public required string EngSamples { get; set; }
+        [Required]
+        public required string TurSamples { get; set; }
 
         public virtual Word Word { get; set; }
     }

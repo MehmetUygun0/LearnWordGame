@@ -24,7 +24,11 @@ namespace Backend.Models
         public Word? Word { get; set; }
         [Range(0, 6)]
         public Step CurrentStep { get; set; } = Step.Start;
-        public DateTime? LastCorrectDate { get; set; }
+        [Column(TypeName = "date")]
+        public DateTime? LastCorrectDate { get; set; } = null;
+        public DateTime CreateAt { get; set; } = DateTime.UtcNow;//silinecek gibi
+        public int ReviewCount { get; set; } = 0;
+        [Column(TypeName = "date")]
         public DateTime? NextReviewDate { get; set; }
         public bool IsLearned { get; set; } = false;
     }

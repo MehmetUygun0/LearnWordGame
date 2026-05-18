@@ -25,11 +25,12 @@ import {
   getReviewSteps,
   submitStudyAnswer,
   getStudyOverview,
+  saveStudyAnswerResult,
   startStudySession,
 } from '@/services/study';
 
 export default function StudyScreen() {
-  const { user } = useAuth();
+  const { token, user } = useAuth();
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState('');
   const [isAnswered, setIsAnswered] = useState(false);
@@ -59,6 +60,7 @@ export default function StudyScreen() {
           startStudySession({
             level: user?.level,
             dailyNewWords: user?.dailyNewWords,
+            token,
           }),
         ]);
 
@@ -72,7 +74,7 @@ export default function StudyScreen() {
     };
 
     loadStudyWords();
-  }, [user?.dailyNewWords, user?.level]);
+  }, [token, user?.dailyNewWords, user?.level]);
 
   const currentWord = useMemo(
     () => studyWords[currentIndex] ?? null,
@@ -138,6 +140,16 @@ export default function StudyScreen() {
       index: currentIndex,
     });
 
+    saveStudyAnswerResult({
+      token,
+      wordId: currentWord.id,
+      isCorrect: result.isCorrect,
+    }).catch(() => {
+      setFeedback((currentFeedback) =>
+        currentFeedback || 'Cevap işlendi, ancak backend sonucu kaydedemedi.'
+      );
+    });
+
     setIsAnswered(true);
     setXp((currentXp) => currentXp + result.xpEarned);
 
@@ -169,7 +181,7 @@ export default function StudyScreen() {
         handleNext();
       }
     }, 1050);
-  }, [answer, currentIndex, currentWord, flipAnim, handleNext, isAnswered, studyWords.length]);
+  }, [answer, currentIndex, currentWord, flipAnim, handleNext, isAnswered, studyWords.length, token]);
 
   const panResponder = useMemo(
     () =>

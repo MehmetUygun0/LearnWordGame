@@ -33,16 +33,16 @@ namespace Backend.Controllers
         {
             byte[] hashedPassword = SHA256.HashPassword(dto.Password);
             User? userFromDb = await _context.Users
-            .Where(u => u.UserName == dto.UserName)
+            .Where(u => u.Email == dto.Email)
             .FirstOrDefaultAsync();
             var listecik = await _context.Users.ToListAsync();
 
-            if (userFromDb != null && userFromDb.Password.SequenceEqual(hashedPassword))
+            if (userFromDb != null)
             {
                 return NotFound(new { message = "Kullanıcı zaten var." });
             }
 
-            await _context.Users.AddAsync(new User { UserName = dto.UserName, Password = hashedPassword, Email = dto.Email });
+            await _context.Users.AddAsync(new User { UserName = dto.UserName, Password = hashedPassword, Email = dto.Email, CreatedAt = DateTime.UtcNow });
             await _context.SaveChangesAsync();
             return Ok();
         }
@@ -161,7 +161,7 @@ namespace Backend.Controllers
 
         [Authorize]
         [HttpGet("profile")]
-        public async Task<IActionResult> GetProfile()
+        public async Task<IActionResult> GetProfile()//kullanıcının profil bilgilerini getiren endpoint
         {
             var userId = GetUserId();
             if (userId == null)
@@ -205,7 +205,7 @@ namespace Backend.Controllers
             var profile = new ProfileDto
             {
                 UserName = user.UserName,
-                CreatedAt = user.CreatedAt,
+                CreatedAt = DateTime.UtcNow,
                 Level = progressSettings.UserLevel,
                 TotalLearnedWords = Math.Max(progressSettings.TotalWordsLearned, learnedWordProgresses.Count),
                 DailyNewWords = progressSettings.NumberOfNewWords,
@@ -213,6 +213,59 @@ namespace Backend.Controllers
             };
 
             return Ok(profile);
+        }
+        [Authorize]
+        [HttpPut("profile/daily-words")]
+        public async Task<IActionResult> UpdateDailyWords([FromBody] UpdateDailyWordsDto dto)//günlük kaç yeni kelime öğrenmek istediğini güncelleme endpointi
+        {
+            if (dto.DailyNewWords < 5 || dto.DailyNewWords > 25)
+            {
+                return BadRequest(new { message = "Günlük yeni kelime sayısı 5 ile 25 arasında olmalıdır." });
+            }
+
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            var progressSettings = await _context.UserProgressSettings
+                .FirstOrDefaultAsync(setting => setting.UserId == userId);
+
+            if (progressSettings == null)
+            {
+                progressSettings = new UserProgressSettings
+                {
+                    UserId = (int)userId
+                };
+                await _context.UserProgressSettings.AddAsync(progressSettings);
+            }
+
+            progressSettings.NumberOfNewWords = dto.DailyNewWords;
+            await _context.SaveChangesAsync();
+            return Ok(new { dailyNewWords = progressSettings.NumberOfNewWords });
+        }
+        [Authorize]
+        [HttpPut("profile/users-level-update")]
+        public async Task<IActionResult> UpdateLevel([FromBody] UpdatelevelDto dto)//kullanıcının seviyesini güncelleme endpointi
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            var progressSettings = await _context.UserProgressSettings
+                .FirstOrDefaultAsync(setting => setting.UserId == userId);
+
+            if (progressSettings == null)
+            {
+                progressSettings = new UserProgressSettings
+                {
+                    UserId = (int)userId
+                };
+                await _context.UserProgressSettings.AddAsync(progressSettings);
+            }
+
+            progressSettings.UserLevel = dto.Level;
+            await _context.SaveChangesAsync();
+            return Ok(new { dailyNewWords = progressSettings.NumberOfNewWords });
         }
     }
 }

@@ -12,7 +12,12 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
-import { getSettingsSummary, SettingsSummary } from '@/services/settings';
+import {
+  getSettingsSummary,
+  SettingsSummary,
+  updateDailyWordsRequest,
+  updateLevelRequest,
+} from '@/services/settings';
 import { WordLevel } from '@/services/words';
 
 const levels: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
@@ -21,7 +26,7 @@ const pixelAvatar = require('../../assets/images/pixel-profile-avatar.png');
 
 export default function SettingsScreen() {
   const { router } = ExpoRouter;
-  const { logout, user } = useAuth();
+  const { logout, token, user } = useAuth();
   const [summary, setSummary] = useState<SettingsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notice, setNotice] = useState('');
@@ -41,8 +46,39 @@ export default function SettingsScreen() {
 
   const updateSetting = async (patch: Partial<SettingsSummary>) => {
     await Haptics.selectionAsync();
-    setSummary((current) => current ? { ...current, ...patch } : current);
-    setNotice('Tercih güncellendi.');
+    const previousSummary = summary;
+    const nextSummary = previousSummary ? { ...previousSummary, ...patch } : previousSummary;
+    setSummary(nextSummary);
+
+    try {
+      if (typeof patch.dailyNewWords === 'number') {
+        const result = await updateDailyWordsRequest({
+          dailyNewWords: patch.dailyNewWords,
+          token,
+        });
+        setSummary((current) =>
+          current
+            ? {
+                ...current,
+                dailyNewWords: result.dailyNewWords,
+                dailyQuestionCount: Math.max(result.dailyNewWords + 3, 10),
+              }
+            : current
+        );
+      }
+
+      if (patch.level) {
+        await updateLevelRequest({
+          level: patch.level,
+          token,
+        });
+      }
+
+      setNotice(token === 'demo-session' ? 'Demo tercihi güncellendi.' : 'Tercih backend tarafına kaydedildi.');
+    } catch (error) {
+      setSummary(previousSummary);
+      setNotice(error instanceof Error ? error.message : 'Tercih güncellenemedi.');
+    }
   };
 
   const handleLogout = async () => {
@@ -90,8 +126,8 @@ export default function SettingsScreen() {
               title="Günlük yeni kelime"
               value={summary?.dailyNewWords ?? 0}
               suffix="kelime"
-              onMinus={() => updateSetting({ dailyNewWords: Math.max((summary?.dailyNewWords ?? 1) - 1, 1) })}
-              onPlus={() => updateSetting({ dailyNewWords: Math.min((summary?.dailyNewWords ?? 1) + 1, 30) })}
+              onMinus={() => updateSetting({ dailyNewWords: Math.max((summary?.dailyNewWords ?? 5) - 1, 5) })}
+              onPlus={() => updateSetting({ dailyNewWords: Math.min((summary?.dailyNewWords ?? 5) + 1, 25) })}
             />
             <StepperRow
               icon="help-circle-outline"

@@ -1,4 +1,6 @@
 // @ts-nocheck
+import config from '@/lib/config';
+import { apiRequest, readResponsePayload } from '@/lib/api';
 import { AuthUser } from '@/services/auth';
 import { getWords } from '@/services/words';
 
@@ -30,13 +32,29 @@ export type ReportSummary = {
     wrongCount: number;
     stage: number;
   }[];
-  source: 'profile';
+  source: 'api' | 'profile';
 };
 
-export const getReportSummary = async (user: AuthUser | null): Promise<ReportSummary> => {
+export const getReportSummary = async (
+  user: AuthUser | null,
+  token?: string | null
+): Promise<ReportSummary> => {
+  if (token && token !== 'demo-session') {
+    const response = await apiRequest({
+      endpoint: config.ENDPOINTS.REPORT.SUMMARY,
+      method: 'GET',
+      token,
+    });
+    const payload = await readResponsePayload(response);
+
+    if (response.ok && payload && typeof payload === 'object') {
+      return normalizeApiReport(payload, user);
+    }
+  }
+
   const words = await getWords();
   const totalLearnedWords = user?.totalLearnedWords ?? words.filter((word) => (word.stage ?? 0) >= 6).length;
-  const dailyNewWords = user?.dailyNewWords ?? 6;
+  const dailyNewWords = user?.dailyNewWords ?? 10;
   const levelStats =
     user?.levelBasedLearnedWords?.length
       ? user.levelBasedLearnedWords
@@ -84,4 +102,62 @@ export const getReportSummary = async (user: AuthUser | null): Promise<ReportSum
       })),
     source: 'profile',
   };
+};
+
+const normalizeApiReport = (payload: any, user: AuthUser | null): ReportSummary => {
+  const levelStats = Array.isArray(payload.levelBreakdown)
+    ? payload.levelBreakdown.map((item: any) => ({
+        level: String(item.level ?? '-'),
+        words: Number(item.learnedWords ?? item.totalWords ?? 0),
+      }))
+    : [];
+
+  const stageStats = Array.isArray(payload.stageBreakdown)
+    ? payload.stageBreakdown.map((item: any) => ({
+        stage: stepToNumber(item.stage),
+        label: String(item.stage ?? 'Yeni'),
+        words: Number(item.wordCount ?? 0),
+      }))
+    : [];
+
+  return {
+    userName: String(payload.userName ?? user?.userName ?? '-'),
+    level: String(payload.currentLevel ?? user?.level ?? 'A1'),
+    totalLearnedWords: Number(payload.learnedWords ?? user?.totalLearnedWords ?? 0),
+    dailyNewWords: user?.dailyNewWords ?? 10,
+    correctRate: Math.round(Number(payload.estimatedKnowledgeScore ?? payload.overallMasteryPercentage ?? 0)),
+    reviewDueCount: Number(payload.readyForReviewWords ?? 0),
+    progressPercent: Math.round(Number(payload.overallMasteryPercentage ?? payload.learnedPercentage ?? 0)),
+    createdAt: user?.createdAt,
+    levelStats: levelStats.length ? levelStats : user?.levelBasedLearnedWords ?? [],
+    stageStats: stageStats.length
+      ? stageStats
+      : Array.from({ length: 7 }).map((_, stage) => ({
+          stage,
+          label: stage === 0 ? 'Yeni' : `${stage}. adım`,
+          words: 0,
+        })),
+    weeklyTrend: Array.isArray(payload.reviewBuckets)
+      ? payload.reviewBuckets.map((item: any) => ({
+          day: String(item.bucket ?? '-').slice(0, 12),
+          correctRate: Math.round(Number(item.percentage ?? 0)),
+        }))
+      : [],
+    difficultWords: [],
+    source: 'api',
+  };
+};
+
+const stepToNumber = (stage: unknown) => {
+  if (typeof stage === 'number') {
+    return stage;
+  }
+
+  const value = String(stage ?? 'Start');
+  if (value === 'Start') {
+    return 0;
+  }
+
+  const match = value.match(/\d+/);
+  return match ? Number(match[0]) : 0;
 };

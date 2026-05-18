@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ExpoRouter from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { BackHeader } from '@/components/ui/BackHeader';
@@ -10,19 +10,21 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { palette, radius, spacing, typography } from '@/constants/theme';
+import { useAuth } from '@/lib/auth-context';
 import { getStoryLab } from '@/services/play';
 
 export default function StoryLabScreen() {
   const router = ExpoRouter.useRouter();
+  const { token } = useAuth();
   const [lab, setLab] = useState(null);
 
   useEffect(() => {
     const loadLab = async () => {
-      setLab(await getStoryLab());
+      setLab(await getStoryLab(token));
     };
 
     loadLab();
-  }, []);
+  }, [token]);
 
   return (
     <ScreenContainer scrollable withBackgroundDecor>
@@ -35,8 +37,14 @@ export default function StoryLabScreen() {
 
       <SurfaceCard accent="primary">
         <View style={styles.visualBox}>
-          <Ionicons name="color-wand-outline" size={34} color={palette.text} />
-          <Text style={styles.visualText}>AI sahne görseli</Text>
+          {lab?.imageUri ? (
+            <Image source={{ uri: lab.imageUri }} style={styles.visualImage} resizeMode="cover" />
+          ) : (
+            <>
+              <Ionicons name="color-wand-outline" size={34} color={palette.text} />
+              <Text style={styles.visualText}>AI sahne görseli</Text>
+            </>
+          )}
         </View>
         <Text style={styles.title}>Seçilen kelimeler</Text>
         <View style={styles.wordRow}>
@@ -75,6 +83,10 @@ const styles = StyleSheet.create({
   visualText: {
     ...typography.label,
     color: palette.text,
+  },
+  visualImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     ...typography.cardTitle,

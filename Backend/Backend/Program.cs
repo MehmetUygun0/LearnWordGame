@@ -3,6 +3,7 @@ using Backend.Data;
 using Backend.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -17,6 +18,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+    .ConfigureWarnings(warnings =>
+        warnings.Ignore(RelationalEventId.PendingModelChangesWarning)
     ));
 builder.Services.AddCors(options =>
 {
@@ -114,8 +118,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseIpRateLimiting();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

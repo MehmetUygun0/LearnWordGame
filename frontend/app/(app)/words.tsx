@@ -12,16 +12,19 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatCard } from '@/components/ui/StatCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { WordCard } from '@/components/ui/WordCard';
+import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
-import { createWordPreview, getWords, WordListItem, WordLevel } from '@/services/words';
+import { createUserWord, getWords, WordListItem, WordLevel } from '@/services/words';
 
 const levels: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 const allLevels: (WordLevel | 'ALL')[] = ['ALL', ...levels];
 
 export default function WordsScreen() {
   const { router } = ExpoRouter;
+  const { token } = useAuth();
   const [words, setWords] = useState<WordListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<WordLevel | 'ALL'>('ALL');
   const [englishWord, setEnglishWord] = useState('');
@@ -34,7 +37,7 @@ export default function WordsScreen() {
   useEffect(() => {
     const loadWords = async () => {
       try {
-        const nextWords = await getWords();
+        const nextWords = await getWords(token);
         setWords(nextWords);
       } finally {
         setIsLoading(false);
@@ -42,7 +45,7 @@ export default function WordsScreen() {
     };
 
     loadWords();
-  }, []);
+  }, [token]);
 
   const filteredWords = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase('tr-TR');
@@ -72,7 +75,7 @@ export default function WordsScreen() {
     setFormNotice('Örnek cümle eklendi.');
   };
 
-  const handleAddPreview = async () => {
+  const handleAddWord = async () => {
     const trimmedEnglish = englishWord.trim();
     const trimmedTurkish = turkishWord.trim();
 
@@ -81,22 +84,35 @@ export default function WordsScreen() {
       return;
     }
 
-    const nextWord = await createWordPreview({
-      engWordName: trimmedEnglish,
-      turWordName: trimmedTurkish,
-      level: formLevel,
-      generatedImageUrl: null,
-      audioUrl: null,
-      samples: samples.length ? samples : sampleSentence.trim() ? [sampleSentence.trim()] : [],
-    });
+    setIsSubmitting(true);
+    setFormNotice('');
 
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setWords((currentWords) => [nextWord, ...currentWords]);
-    setEnglishWord('');
-    setTurkishWord('');
-    setSampleSentence('');
-    setSamples([]);
-    setFormNotice('Kelime listeye eklendi.');
+    try {
+      const nextWord = await createUserWord({
+        token,
+        draft: {
+          engWordName: trimmedEnglish,
+          turWordName: trimmedTurkish,
+          level: formLevel,
+          generatedImageUrl: null,
+          audioUrl: null,
+          samples: samples.length ? samples : sampleSentence.trim() ? [sampleSentence.trim()] : [],
+        },
+      });
+
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setWords((currentWords) => [nextWord, ...currentWords]);
+      setEnglishWord('');
+      setTurkishWord('');
+      setSampleSentence('');
+      setSamples([]);
+      setFormNotice(token === 'demo-session' ? 'Demo kelime listeye eklendi.' : 'Kelime backend tarafına kaydedildi.');
+    } catch (error) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setFormNotice(error instanceof Error ? error.message : 'Kelime eklenemedi.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -204,7 +220,12 @@ export default function WordsScreen() {
         </View>
 
         {formNotice ? <Text style={styles.noticeText}>{formNotice}</Text> : null}
-        <AppButton label="Listeye ekle" icon="add-outline" onPress={handleAddPreview} />
+        <AppButton
+          label="Listeye ekle"
+          icon="add-outline"
+          onPress={handleAddWord}
+          loading={isSubmitting}
+        />
       </SurfaceCard>
 
       <SurfaceCard muted>

@@ -31,9 +31,23 @@ const config = {
       RESET_PASSWORD: '/api/User/reset-password',
       REFRESH: '/api/User/refresh',
       PROFILE: '/api/User/profile',
+      UPDATE_DAILY_WORDS: '/api/User/profile/daily-words',
+      UPDATE_LEVEL: '/api/User/profile/users-level-update',
     },
     WORDS: {
       ADD: '/api/Word/add',
+      MY_WORDS: '/api/Word/get-myword',
+      DAILY_WORD: '/api/Word/daily-word',
+      TEST_RESULT: '/api/Word/test-result',
+    },
+    REPORT: {
+      SUMMARY: '/api/Analysis/report',
+    },
+    WORDLE: {
+      NEW_GAME: '/api/Wordle/new-game',
+    },
+    WORD_CHAIN: {
+      GET: '/api/WordChain/get-word-chain',
     },
   },
   SOCKET: {

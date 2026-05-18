@@ -79,6 +79,24 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen
+        name="wordle"
+        options={{
+          title: 'Wordle',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="game-controller-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="word-chain"
+        options={{
+          title: 'Chain',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="git-branch-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="report"
         options={{
           title: 'Rapor',
@@ -93,7 +111,6 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen name="word/[id]" options={{ href: null }} />
-      <Tabs.Screen name="wordle" options={{ href: null }} />
       <Tabs.Screen name="story-lab" options={{ href: null }} />
     </Tabs>
   );

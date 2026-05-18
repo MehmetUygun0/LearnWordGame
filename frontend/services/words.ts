@@ -1,4 +1,7 @@
 // @ts-nocheck
+import config from '@/lib/config';
+import { apiRequest, getErrorMessage, readResponsePayload } from '@/lib/api';
+
 export type WordLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 
 export type WordListItem = {
@@ -99,18 +102,80 @@ const mockWords: WordListItem[] = [
 ];
 
 const levelOrder: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
+const userCreatedWords: WordListItem[] = [];
 
-export const getWords = async () => {
-  return mockWords.map(normalizeWord).sort(sortByLevel);
+export const getWords = async (token?: string | null) => {
+  if (token && token !== 'demo-session') {
+    const response = await apiRequest({
+      endpoint: config.ENDPOINTS.WORDS.MY_WORDS,
+      method: 'GET',
+      token,
+    });
+
+    const payload = await readResponsePayload(response);
+
+    if (response.ok && Array.isArray(payload)) {
+      return payload.map(normalizeWord).sort(sortByLevel);
+    }
+  }
+
+  return [...userCreatedWords, ...mockWords.map(normalizeWord)].sort(sortByLevel);
 };
 
-export const getWordById = async (id: number | string) => {
-  const words = await getWords();
+export const getDailyWords = async (token?: string | null) => {
+  if (token && token !== 'demo-session') {
+    const response = await apiRequest({
+      endpoint: config.ENDPOINTS.WORDS.DAILY_WORD,
+      method: 'POST',
+      token,
+    });
+
+    const payload = await readResponsePayload(response);
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(payload, 'Günlük kelimeler alınamadı.'));
+    }
+
+    if (Array.isArray(payload)) {
+      return payload.map(normalizeWord).sort(sortByLevel);
+    }
+  }
+
+  return getWords(token);
+};
+
+export const saveWordTestResults = async ({
+  token,
+  results,
+}: {
+  token?: string | null;
+  results: { wordId: number; isCorrect: boolean }[];
+}) => {
+  if (!token || token === 'demo-session' || !results.length) {
+    return;
+  }
+
+  const response = await apiRequest({
+    endpoint: config.ENDPOINTS.WORDS.TEST_RESULT,
+    method: 'POST',
+    token,
+    body: JSON.stringify(results),
+  });
+
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, 'Test sonucu kaydedilemedi.'));
+  }
+};
+
+export const getWordById = async (id: number | string, token?: string | null) => {
+  const words = await getWords(token);
   return words.find((word) => String(word.id) === String(id)) ?? words[0];
 };
 
 export const createWordPreview = async (draft: WordDraft): Promise<WordListItem> => {
-  return normalizeWord({
+  const word = normalizeWord({
     id: Date.now(),
     engWordName: draft.engWordName,
     turWordName: draft.turWordName,
@@ -124,6 +189,60 @@ export const createWordPreview = async (draft: WordDraft): Promise<WordListItem>
     lastResult: 'new',
     nextReviewLabel: 'Yeni',
   });
+
+  userCreatedWords.unshift(word);
+
+  return word;
+};
+
+export const createUserWord = async ({
+  draft,
+  token,
+}: {
+  draft: WordDraft;
+  token?: string | null;
+}): Promise<WordListItem> => {
+  if (!token || token === 'demo-session') {
+    return createWordPreview(draft);
+  }
+
+  const response = await apiRequest({
+    endpoint: config.ENDPOINTS.WORDS.ADD,
+    method: 'POST',
+    token,
+    body: JSON.stringify({
+      engWordName: draft.engWordName.trim(),
+      turWordName: draft.turWordName.trim(),
+      level: draft.level,
+      picture: draft.generatedImageUrl ?? null,
+      samples: draft.samples,
+    }),
+  });
+
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, 'Kelime backend tarafına kaydedilemedi.'));
+  }
+
+  const word = normalizeWord({
+    id: payload?.id ?? Date.now(),
+    engWordName: draft.engWordName,
+    turWordName: draft.turWordName,
+    level: draft.level,
+    pictureUrl: draft.generatedImageUrl ?? null,
+    audioUrl: draft.audioUrl ?? null,
+    samples: draft.samples,
+    stage: 0,
+    successCount: 0,
+    wrongCount: 0,
+    lastResult: 'new',
+    nextReviewLabel: 'Yeni',
+  });
+
+  userCreatedWords.unshift(word);
+
+  return word;
 };
 
 const normalizeWord = (item: any): WordListItem => ({
@@ -136,9 +255,11 @@ const normalizeWord = (item: any): WordListItem => ({
   samples: Array.isArray(item.samples)
     ? item.samples.map((sample: unknown) => String(sample)).filter(Boolean)
     : Array.isArray(item.wordSamples)
-      ? item.wordSamples.map((sample: any) => String(sample.samples ?? sample)).filter(Boolean)
+      ? item.wordSamples
+          .map((sample: any) => String(sample.samples ?? sample.engSamples ?? sample.turSamples ?? sample))
+          .filter(Boolean)
       : [],
-  stage: Math.max(0, Math.min(Number(item.stage ?? item.successStage ?? 0), 6)),
+  stage: Math.max(0, Math.min(Number(item.stage ?? item.successStage ?? item.currentStep ?? 0), 6)),
   successCount: Number(item.successCount ?? 0),
   wrongCount: Number(item.wrongCount ?? 0),
   lastResult: item.lastResult ?? 'new',
@@ -156,8 +277,8 @@ const normalizeLevel = (level: unknown): WordLevel => {
 const sortByLevel = (left: WordListItem, right: WordListItem) =>
   levelOrder.indexOf(left.level) - levelOrder.indexOf(right.level);
 
-export const getWordsForLevel = async (level?: string) => {
-  const words = await getWords();
+export const getWordsForLevel = async (level?: string, token?: string | null) => {
+  const words = await getWords(token);
 
   if (!level || !levelOrder.includes(level as WordLevel)) {
     return words;

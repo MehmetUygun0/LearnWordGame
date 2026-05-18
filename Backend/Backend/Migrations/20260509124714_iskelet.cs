@@ -6,11 +6,29 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Backend.Migrations
 {
     /// <inheritdoc />
-    public partial class begin : Migration
+    public partial class iskelet : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "UserProgressSettings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    UserLevel = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastDailyWord = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TotalWordsLearned = table.Column<int>(type: "int", nullable: false),
+                    NumberOfNewWords = table.Column<int>(type: "int", nullable: false),
+                    WordCount = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserProgressSettings", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -20,6 +38,7 @@ namespace Backend.Migrations
                     UserName = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false, collation: "Turkish_CS_AS"),
                     Password = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -68,9 +87,12 @@ namespace Backend.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     WordId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
                     CurrentStep = table.Column<int>(type: "int", nullable: false),
-                    LastCorrectDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    NextReviewDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastCorrectDate = table.Column<DateTime>(type: "date", nullable: true),
+                    CreateAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ReviewCount = table.Column<int>(type: "int", nullable: false),
+                    NextReviewDate = table.Column<DateTime>(type: "date", nullable: true),
                     IsLearned = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -91,7 +113,8 @@ namespace Backend.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     WordID = table.Column<int>(type: "int", nullable: false),
-                    Samples = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    EngSamples = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TurSamples = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -124,6 +147,9 @@ namespace Backend.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "UserProgressSettings");
+
             migrationBuilder.DropTable(
                 name: "Users");
 

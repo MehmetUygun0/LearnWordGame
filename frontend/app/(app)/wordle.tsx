@@ -14,10 +14,12 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { palette, radius, spacing, typography } from '@/constants/theme';
+import { useAuth } from '@/lib/auth-context';
 import { evaluateGuess, getWordleToday, WordleGuess } from '@/services/play';
 
 export default function WordleScreen() {
   const router = ExpoRouter.useRouter();
+  const { token } = useAuth();
   const [answer, setAnswer] = useState('');
   const [hint, setHint] = useState('');
   const [maxAttempts, setMaxAttempts] = useState(6);
@@ -30,7 +32,7 @@ export default function WordleScreen() {
 
   useEffect(() => {
     const loadWordle = async () => {
-      const today = await getWordleToday();
+      const today = await getWordleToday(token);
       setAnswer(today.answer);
       setHint(today.hint);
       setMaxAttempts(today.maxAttempts ?? 6);
@@ -38,7 +40,7 @@ export default function WordleScreen() {
     };
 
     loadWordle();
-  }, []);
+  }, [token]);
 
   const handleGuess = async () => {
     const cleanGuess = guess.trim().toLowerCase();
