@@ -63,6 +63,7 @@ namespace Backend.Controllers
 
             return Ok(await _context.UserWords.Where(x => x.UserId == userId).Select(x => new WordDTO
             {
+                Level = x.Level,
                 WordId = x.Id,
                 EngWordName = x.EngWordName,
                 TurWordName = x.TurWordName,
@@ -104,6 +105,7 @@ namespace Backend.Controllers
                 WordId = word.WordId,
                 EngWordName = word.Word.EngWordName,
                 TurWordName = word.Word.TurWordName,
+                Level = word.Word.Level,
                 WordSamples = word.Word.WordSamples.Select(s => new WordSampleDTO
                 {
                     Id = s.Id,
@@ -120,6 +122,7 @@ namespace Backend.Controllers
                 WordId = w.Id,
                 EngWordName = w.EngWordName,
                 TurWordName = w.TurWordName,
+                Level = w.Level,
                 WordSamples = w.WordSamples.Select(s => new WordSampleDTO
                 {
                     Id = s.Id,

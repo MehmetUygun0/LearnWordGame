@@ -8,6 +8,7 @@ namespace Backend.Models.DTOs
         public int WordId { get; set; }
         public required string EngWordName { get; set; }
         public required string TurWordName { get; set; }
+        public required string Level { get; set; }
         public virtual List<WordSampleDTO>? WordSamples { get; set; }
     }
 }
