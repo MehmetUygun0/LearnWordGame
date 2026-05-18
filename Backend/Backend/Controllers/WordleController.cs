@@ -30,8 +30,6 @@ namespace Backend.Controllers
             if (userId == null)
                 return Unauthorized();
             return Ok(await GetRandomWordFromDatabase((int)userId));
-
-          
         }
 
         private async Task<WordleDTO> GetRandomWordFromDatabase(int id)

@@ -8,9 +8,11 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { palette, radius, spacing, typography } from '@/constants/theme';
+import { useAuth } from '@/lib/auth-context';
 import { createWordChain, WordChainResult } from '@/services/word-chain';
 
 export default function WordChainScreen() {
+  const { token } = useAuth();
   const [result, setResult] = useState<WordChainResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [savedMessage, setSavedMessage] = useState('');
@@ -20,7 +22,7 @@ export default function WordChainScreen() {
     setSavedMessage('');
 
     try {
-      setResult(await createWordChain());
+      setResult(await createWordChain(token));
     } finally {
       setIsLoading(false);
     }
@@ -28,7 +30,7 @@ export default function WordChainScreen() {
 
   useEffect(() => {
     loadChain();
-  }, []);
+  }, [token]);
 
   return (
     <ScreenContainer scrollable>

@@ -45,14 +45,14 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <ScreenContainer contentStyle={styles.content}>
+    <ScreenContainer withBackgroundDecor contentStyle={styles.content}>
       <SectionHeader
         eyebrow="Erişimi yenile"
-        title="Şifre sıfırlama akışını burada başlat."
-        description="Kullanıcı adı veya e-posta ile sıfırlama kodu iste, ardından yeni şifre ekranında kodunu doğrula."
+        title="Şifreni yenile."
+        description="Kullanıcı adını veya e-postanı yaz, sıfırlama kodunu al."
       />
 
-      <SurfaceCard>
+      <SurfaceCard accent="primary">
         <AppInput
           label="E-posta veya kullanıcı adı"
           placeholder="mail@ornek.com"
@@ -61,17 +61,11 @@ export default function ForgotPasswordScreen() {
           error={error}
         />
         <AppButton
-          label="Sıfırlama bağlantısı gönder"
+          label="Kod iste"
+          icon="mail-outline"
           onPress={handleForgotPassword}
           loading={isSubmitting}
         />
-      </SurfaceCard>
-
-      <SurfaceCard muted>
-        <Text style={styles.noteTitle}>Akış özeti</Text>
-        <Text style={styles.noteText}>1. Kullanıcı adı veya e-posta girilir.</Text>
-        <Text style={styles.noteText}>2. Backend sıfırlama kodunu e-posta ile yollar.</Text>
-        <Text style={styles.noteText}>3. Kullanıcı bir sonraki ekranda kod ve yeni şifreyi gönderir.</Text>
       </SurfaceCard>
 
       <View style={styles.links}>

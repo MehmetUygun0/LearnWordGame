@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
 
@@ -11,9 +12,9 @@ type AppButtonProps = {
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
 };
 
-// Projedeki tüm ana aksiyonlar aynı buton bileşeni üzerinden geçsin diye ortaklaştırıldı.
 export function AppButton({
   label,
   onPress,
@@ -21,6 +22,7 @@ export function AppButton({
   disabled = false,
   loading = false,
   fullWidth = true,
+  icon,
 }: AppButtonProps) {
   return (
     <Pressable
@@ -30,15 +32,20 @@ export function AppButton({
         styles.base,
         fullWidth && styles.fullWidth,
         variantStyles[variant],
+        variant === 'primary' && shadows.glow,
         (disabled || loading) && styles.disabled,
         hovered && styles.hovered,
         pressed && styles.pressed,
-        variant === 'primary' && shadows.glow,
       ]}>
       {loading ? (
         <ActivityIndicator color={labelStyles[variant].color} />
       ) : (
-        <Text style={[styles.label, labelStyles[variant]]}>{label}</Text>
+        <View style={styles.content}>
+          {icon ? <Ionicons name={icon} size={18} color={labelStyles[variant].color} /> : null}
+          <Text style={[styles.label, labelStyles[variant]]} numberOfLines={1}>
+            {label}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
@@ -46,9 +53,9 @@ export function AppButton({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 54,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.lg,
+    minHeight: 52,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -59,27 +66,32 @@ const styles = StyleSheet.create({
   label: {
     ...typography.button,
   },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
   hovered: {
-    transform: [{ translateY: -1 }],
+    transform: [{ translateY: -2 }],
   },
   pressed: {
-    transform: [{ scale: 0.98 }],
-    opacity: 0.92,
+    transform: [{ scale: 0.97 }],
+    opacity: 0.88,
   },
   disabled: {
-    opacity: 0.55,
+    opacity: 0.48,
   },
 });
 
-// Variant bazlı görünüm ayrımı burada; ekranlar içinde renk/stil tekrarı yapmıyoruz.
 const variantStyles = StyleSheet.create({
   primary: {
     backgroundColor: palette.primary,
     borderColor: palette.primaryStrong,
   },
   secondary: {
-    backgroundColor: palette.cardMuted,
-    borderColor: palette.border,
+    backgroundColor: palette.electricSoft,
+    borderColor: 'rgba(124, 108, 255, 0.34)',
   },
   ghost: {
     backgroundColor: 'transparent',

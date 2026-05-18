@@ -8,7 +8,6 @@ type ProgressMeterProps = {
   progress: number;
 };
 
-// Çalışma akışında ilerleme durumunu sade ama okunur bir şekilde gösteriyoruz.
 export function ProgressMeter({ progress }: ProgressMeterProps) {
   const safeProgress = Math.max(0, Math.min(progress, 1));
 
@@ -22,14 +21,16 @@ export function ProgressMeter({ progress }: ProgressMeterProps) {
 const styles = StyleSheet.create({
   track: {
     width: '100%',
-    height: 8,
+    height: 10,
     borderRadius: radius.pill,
     overflow: 'hidden',
     backgroundColor: palette.backgroundElevated,
+    borderWidth: 1,
+    borderColor: palette.borderSoft,
   },
   fill: {
     height: '100%',
     borderRadius: radius.pill,
-    backgroundColor: palette.primary,
+    backgroundColor: palette.accent,
   },
 });
