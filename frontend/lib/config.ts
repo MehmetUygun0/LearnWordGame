@@ -31,7 +31,7 @@ const config = {
       RESET_PASSWORD: '/api/User/reset-password',
       REFRESH: '/api/User/refresh',
       PROFILE: '/api/User/profile',
-      UPDATE_DAILY_WORDS: '/api/User/profile/daily-words',
+      UPDATE_DAILY_WORDS: '/api/User/profile/daily-word',
       UPDATE_LEVEL: '/api/User/profile/users-level-update',
     },
     WORDS: {
