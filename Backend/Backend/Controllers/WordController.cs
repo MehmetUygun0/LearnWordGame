@@ -72,7 +72,7 @@ namespace Backend.Controllers
         }
 
         [Authorize]
-        [HttpPost("daily-word")]
+        [HttpGet("daily-word")]
         public async Task<IActionResult> DailyWord()//kullanıcı günlük kelimelerini bu endpointten alacak
         {
             var userId = GetUserId();
