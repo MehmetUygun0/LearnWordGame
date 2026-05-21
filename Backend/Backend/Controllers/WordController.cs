@@ -97,7 +97,7 @@ namespace Backend.Controllers
                 .ToListAsync();
 
             int lastReviewCount = lastProgressWords.Count() == 0 ? 0 : lastProgressWords.First().ReviewCount;
-            DateTime? lastNextReviewDate = lastProgressWords.Count() == 0 ? lastProgressWords.First().NextReviewDate : DateTime.MinValue;
+            DateTime? lastNextReviewDate = lastProgressWords.Count() == 0 ?  DateTime.MinValue : lastProgressWords.First().NextReviewDate;
 
 
             var necessarylastProgressWords = lastProgressWords.Where(x => x.ReviewCount == lastReviewCount && x.NextReviewDate == lastNextReviewDate).Select(word => new WordDTO
