@@ -214,24 +214,156 @@ Frontend tarafında olması gereken ana ekranlar:
 ### Backend'de ki tüm ENDPOİNTLER
 
 - `POST /api/User/login`
-- `POST /api/User/register`
+```http
+POST http://localhost:5000/api/User/login
+Content-Type: application/json
+
+{
+  "userName": "ayse",
+  "password": "Secret123!"
+}
+```
+
+
+- `POST http://localhost:5000/api/User/register`
+```http
+POST http://localhost:5000/api/User/register
+Content-Type: application/json
+
+{
+  "userName": "ayse",
+  "password": "Secret123!",
+  "email": "ayse@example.com"
+}
+```
+
+  
 - `POST /api/User/forgot-password`
+```http
+POST http://localhost:5000/api/User/forgot-password?usernameOrEmail=ayse@example.com
+```
+
 - `POST /api/User/reset-password`
+```http
+POST http://localhost:5000/api/User/reset-password
+Content-Type: application/json
+
+{
+  "userNameOrEmail": "ayse@example.com",
+  "code": 123456,
+  "newPassword": "NewSecret123!"
+}
+```
+
+- 
 - `POST /api/User/refresh`
+```http
+POST http://localhost:5000/api/User/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "<refreshToken>"
+}
+```
+
+  
 - `PUT /api/User/profile/daily-words`
+```http
+PUT http://localhost:5000/api/User/profile/daily-words
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+
+{
+  "dailyNewWords": 10
+}
+```
+
+
 - `PUT /api/User/profile/users-level-update`
+```http
+PUT http://localhost:5000/api/User/profile/users-level-update
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+
+{
+  "level": "A2"
+}
+```
+
+
 - `GET /api/User/profile`
+```http
+GET http://localhost:5000/api/User/profile
+Authorization: Bearer <accessToken>
+```
+
 
 - `POST /api/Word/add`
-- `POST /api/Word/add`
+```http
+POST http://localhost:5000/api/Word/add
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+
+{
+  "engWordName": "book",
+  "turWordName": "kitap",
+  "level": "FromUsers"
+}
+```
+
+  
 - `GET /api/Word/get-myword`
+```http
+GET http://localhost:5000/api/Word/get-myword
+Authorization: Bearer <accessToken>
+```
+
+  
 - `GET /api/Word/daily-word`
-- 
+```http
+GET http://localhost:5000/api/Word/daily-word
+Authorization: Bearer <accessToken>
+```
+
+
+- `POST /api/Word/test-result`
+```http
+POST http://localhost:5000/api/Word/test-result
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+
+[
+  {
+    "wordId": 12,
+    "isCorrect": true
+  },
+  {
+    "wordId": 13,
+    "isCorrect": false
+  }
+]
+```
+
+
 - `GET /api/Wordle/new-game`
+```http
+GET http://localhost:5000/api/Wordle/new-game
+Authorization: Bearer <accessToken>
+```
+
 
 - `GET /api/WordChain/get-word-chain`
+```http
+GET http://localhost:5000/api/WordChain/get-word-chain
+Authorization: Bearer <accessToken>
+```
   
 - `GET /api/Analysis/report`
+```http
+GET http://localhost:5000/api/Analysis/report
+Authorization: Bearer <accessToken>
+```
+
 
 ## Frontend'de Yapılması Gerekenler
 
