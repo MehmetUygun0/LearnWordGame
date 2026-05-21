@@ -211,174 +211,27 @@ Frontend tarafında olması gereken ana ekranlar:
 - Wordle ekranı
 - Opsiyonel LLM hikaye ekranı
 
-## Backend'de Yapılması Gerekenler
+### Backend'de ki tüm ENDPOİNTLER
 
-### 1. Authentication katmanını düzeltmek
+- `POST /api/User/login`
+- `POST /api/User/register`
+- `POST /api/User/forgot-password`
+- `POST /api/User/reset-password`
+- `POST /api/User/refresh`
+- `PUT /api/User/profile/daily-words`
+- `PUT /api/User/profile/users-level-update`
+- `GET /api/User/profile`
 
-Mevcut durumda:
+- `POST /api/Word/add`
+- `POST /api/Word/add`
+- `GET /api/Word/get-myword`
+- `GET /api/Word/daily-word`
+- 
+- `GET /api/Wordle/new-game`
 
-- `register` ve `login` var
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- Giriş sonrası token veya session mantığı
-- Şifre SHA-256 ile hashleniyor
-
-Yapılması gerekenler:
-
-- Düz query string yerine JSON body kullanımı
-
-### 2. Veri modelini büyütmek
-
-Şu an mevcut modeller:
-
-- `User`
-- `Word`
-- `WordSample`
-- `PasswordResetToken`
-
-Eklenmesi gereken modeller:
-
-- `UserSettings`
-- `WordProgress`
-- `QuizSession`
-- `QuizQuestion`
-- `QuizAnswer`
-- `DailyPlan`
-
-Önerilen ek tablo mantığı:
-
-- `UserSettings`
-  - günlük yeni kelime sayısı
-  - günlük tekrar sayısı
-- `WordProgress`
-  - `UserId`
-  - `WordId`
-  - `SuccessStage`
-  - `NextReviewAt`
-  - `LastReviewedAt`
-  - `CorrectStreak`
-  - `IsLearned`
-- `QuizAnswer`
-  - hangi kullanıcı
-  - hangi kelime
-  - doğru mu
-  - hangi tarihte cevapladı
-  - hangi tekrar aşamasındaydı
-
-### 3. Kelime yönetimi modülü
-
-Gereken endpoint'ler:
-
-- `GET /api/words`
-- `GET /api/words/{id}`
-- `POST /api/words`
-- `PUT /api/words/{id}`
-- `DELETE /api/words/{id}`
-- `POST /api/words/{id}/samples`
-- `POST /api/words/{id}/image`
-- `POST /api/words/{id}/audio`
-
-### 4. 6 tekrar algoritması
-
-Bu proje için kritik nokta budur.
-
-Önerilen mantık:
-
-1. Kullanıcıya önce yeni kelimeler tanımlanır.
-2. Her kelime için `SuccessStage = 0` ile başlanır.
-3. Kullanıcı doğru cevap verdikçe bir sonraki aşamaya geçilir.
-4. Sonraki gösterim tarihi stage'e göre hesaplanır.
-5. Kullanıcı yanlış cevap verirse stage sıfırlanır.
-6. Son stage tamamlanınca kelime `IsLearned = true` olur.
-
-Önerilen tekrar aralıkları:
-
-- Stage 0 -> aynı gün veya öğrenme kaydı
-- Stage 1 -> `+1 day`
-- Stage 2 -> `+7 days`
-- Stage 3 -> `+30 days`
-- Stage 4 -> `+90 days`
-- Stage 5 -> `+180 days`
-- Stage 6 -> `+365 days`
-
-Uygulamada karar:
-
-- "İlk karşılaşma" ayrı bir öğrenme anı mı sayılacak, yoksa ilk doğru cevap stage 1 mi olacak?
-- Bunu backend tarafında tek bir servis üzerinden standartlaştırmak gerekir
-
-### 5. Günlük test planı üretme
-
-Backend her gün kullanıcı için şu iki kaynaktan soru toplamalı:
-
-- Bugün tekrarı gelen kelimeler
-- Kullanıcının ayarına göre yeni eklenecek kelimeler
-
-Gereken endpoint'ler:
-
-- `GET /api/study/today`
-- `POST /api/study/submit-answer`
-- `POST /api/study/finish-session`
-
-`GET /api/study/today` cevabı şu bilgileri dönmeli:
-
-- bugün sorulacak kelimeler
-- hangileri tekrar, hangileri yeni
-- toplam soru sayısı
-- cevap formatı
-
-### 6. Raporlama
-
-Gereken endpoint'ler:
-
-- `GET /api/reports/progress`
-- `GET /api/reports/learned-words`
-- `GET /api/reports/success-rate`
-- `GET /api/reports/printable`
-
-Rapor içinde olması gereken veriler:
-
-- toplam kelime
-- öğrenilen kelime
-- öğrenme aşamasında olan kelime
-- başarı oranı
-- günlük/haftalık performans
-
-### 7. Wordle modülü
-
-Wordle benzeri modül için backend'de gerekenler:
-
-- öğrenilmiş kelimeler havuzu
-- günlük kelime seçimi
-- deneme kayıtları
-
-Gereken endpoint'ler:
-
-- `GET /api/wordle/today`
-- `POST /api/wordle/guess`
-- `GET /api/wordle/history`
-
-### 8. LLM modülü
-
-Bu modül bonus ama yapılacaksa backend'de ayrı tutulmalı.
-
-Amaç:
-
-- Kullanıcının öğrendiği kelimelerle kısa hikaye üretmek
-- Hikayeye uygun görsel üretmek
-
-Gereken yapı:
-
-- prompt oluşturma servisi
-- LLM çağrısı
-- üretilen hikaye kaydı
-- opsiyonel görsel URL veya dosya kaydı
-
-Gereken endpoint'ler:
-
-- `POST /api/llm/story`
-- `GET /api/llm/story-history`
+- `GET /api/WordChain/get-word-chain`
+  
+- `GET /api/Analysis/report`
 
 ## Frontend'de Yapılması Gerekenler
 
