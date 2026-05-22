@@ -23,23 +23,13 @@ namespace Backend.Controllers
         [HttpGet("new-game")]
         public async Task<IActionResult> NewGame()
         {
-            var userId = GetCurrentUserId();
-
-            if (userId is null)
-            {
-                return Unauthorized(new
-                {
-                    error = "Wordle bulmacasi icin giris yapmis bir kullanici gerekiyor."
-                });
-            }
-
-            var answer = await GetRandomLearnedWordFromDatabase(userId.Value);
+            var answer = await GetRandomWordFromDatabase();
 
             if (answer is null)
             {
                 return NotFound(new
                 {
-                    error = "Wordle icin kullanicinin ogrendigi 5 harfli Ingilizce kelime bulunamadi."
+                    error = "Wordle icin veritabaninda 5 harfli Ingilizce kelime bulunamadi."
                 });
             }
 
@@ -61,9 +51,9 @@ namespace Backend.Controllers
             return Ok(result);
         }
 
-        private async Task<string?> GetRandomLearnedWordFromDatabase(int userId)
+        private async Task<string?> GetRandomWordFromDatabase()
         {
-            var words = await GetLearnedCandidateWords(userId);
+            var words = await GetCandidateWords();
 
             if (words.Count == 0)
                 return null;
@@ -71,15 +61,25 @@ namespace Backend.Controllers
             return words[Random.Shared.Next(words.Count)];
         }
 
-        private async Task<List<string>> GetLearnedCandidateWords(int userId)
+        private async Task<List<string>> GetCandidateWords()
         {
-            var learnedWords = await _context.UserWordProgresses
+            var userId = GetCurrentUserId();
+
+            var systemWords = await _context.Words
                 .AsNoTracking()
-                .Where(progress => progress.UserId == userId && progress.IsLearned)
-                .Select(progress => progress.Word!.EngWordName)
+                .Select(word => word.EngWordName)
                 .ToListAsync();
 
-            return learnedWords
+            var userWords = userId is null
+                ? []
+                : await _context.UserWords
+                    .AsNoTracking()
+                    .Where(word => word.UserId == userId.Value)
+                    .Select(word => word.EngWordName)
+                    .ToListAsync();
+
+            return systemWords
+                .Concat(userWords)
                 .Select(NormalizeWord)
                 .Where(IsWordleWord)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
