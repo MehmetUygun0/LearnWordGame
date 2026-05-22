@@ -59,6 +59,30 @@ Expo tabanlı mobil istemci.
 - TypeScript
 - React 19
 
+## Docker ile Çalıştırma
+
+Projeyi ekip içinde aynı sürümlerle ayağa kaldırmak için kök klasörde çalıştırın:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Bu komut üç servisi başlatır:
+
+- `db`: SQL Server 2022, verileri `sqlvolume` Docker volume'unda tutar
+- `backend`: ASP.NET Core API, host makinede `http://localhost:5000`
+- `mobile`: Expo geliştirme sunucusu, host makinede `http://localhost:8081`
+
+Android emulator backend'e `http://10.0.2.2:5000` üzerinden ulaşır. iOS simulator ve web için varsayılan adres `http://localhost:5000` olur. Fiziksel telefonda Expo QR ile test ederken `.env` içindeki `EXPO_PUBLIC_API_URL` değerini bilgisayarınızın yerel ağ IP adresiyle değiştirin:
+
+```bash
+EXPO_PUBLIC_API_URL=http://192.168.1.25:5000
+REACT_NATIVE_PACKAGER_HOSTNAME=192.168.1.25
+```
+
+Docker backend ve veritabanı sürüm farklılıklarını büyük ölçüde çözer. Mobil tarafta ise Expo Go / emulator / cihaz SDK uyumu hâlâ önemlidir; bu yüzden Node ve npm bağımlılıkları Docker içinde sabitlense bile fiziksel cihazdaki Expo sürümünün proje SDK'sı ile uyumlu olması gerekir.
+
 ## Mevcut Durum
 
 Şu an backend tarafında temel kullanıcı kayıt ve giriş mantığı var. Frontend tarafında ise ürün akışından çok başlangıç şablonu ve deneme ekranları bulunuyor. Yani proje fikri net, fakat PDF'teki tüm story'leri karşılayan ürün henüz tamamlanmış değil.
@@ -187,174 +211,159 @@ Frontend tarafında olması gereken ana ekranlar:
 - Wordle ekranı
 - Opsiyonel LLM hikaye ekranı
 
-## Backend'de Yapılması Gerekenler
+### Backend'de ki tüm ENDPOİNTLER
 
-### 1. Authentication katmanını düzeltmek
+- `POST /api/User/login`
+```http
+POST http://localhost:5000/api/User/login
+Content-Type: application/json
 
-Mevcut durumda:
+{
+  "userName": "ayse",
+  "password": "Secret123!"
+}
+```
 
-- `register` ve `login` var
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- Giriş sonrası token veya session mantığı
-- Şifre SHA-256 ile hashleniyor
 
-Yapılması gerekenler:
+- `POST http://localhost:5000/api/User/register`
+```http
+POST http://localhost:5000/api/User/register
+Content-Type: application/json
 
-- Düz query string yerine JSON body kullanımı
+{
+  "userName": "ayse",
+  "password": "Secret123!",
+  "email": "ayse@example.com"
+}
+```
 
-### 2. Veri modelini büyütmek
+  
+- `POST /api/User/forgot-password`
+```http
+POST http://localhost:5000/api/User/forgot-password?usernameOrEmail=ayse@example.com
+```
 
-Şu an mevcut modeller:
+- `POST /api/User/reset-password`
+```http
+POST http://localhost:5000/api/User/reset-password
+Content-Type: application/json
 
-- `User`
-- `Word`
-- `WordSample`
-- `PasswordResetToken`
+{
+  "userNameOrEmail": "ayse@example.com",
+  "code": 123456,
+  "newPassword": "NewSecret123!"
+}
+```
 
-Eklenmesi gereken modeller:
+- 
+- `POST /api/User/refresh`
+```http
+POST http://localhost:5000/api/User/refresh
+Content-Type: application/json
 
-- `UserSettings`
-- `WordProgress`
-- `QuizSession`
-- `QuizQuestion`
-- `QuizAnswer`
-- `DailyPlan`
+{
+  "refreshToken": "<refreshToken>"
+}
+```
 
-Önerilen ek tablo mantığı:
+  
+- `PUT /api/User/profile/daily-words`
+```http
+PUT http://localhost:5000/api/User/profile/daily-words
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 
-- `UserSettings`
-  - günlük yeni kelime sayısı
-  - günlük tekrar sayısı
-- `WordProgress`
-  - `UserId`
-  - `WordId`
-  - `SuccessStage`
-  - `NextReviewAt`
-  - `LastReviewedAt`
-  - `CorrectStreak`
-  - `IsLearned`
-- `QuizAnswer`
-  - hangi kullanıcı
-  - hangi kelime
-  - doğru mu
-  - hangi tarihte cevapladı
-  - hangi tekrar aşamasındaydı
+{
+  "dailyNewWords": 10
+}
+```
 
-### 3. Kelime yönetimi modülü
 
-Gereken endpoint'ler:
+- `PUT /api/User/profile/users-level-update`
+```http
+PUT http://localhost:5000/api/User/profile/users-level-update
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 
-- `GET /api/words`
-- `GET /api/words/{id}`
-- `POST /api/words`
-- `PUT /api/words/{id}`
-- `DELETE /api/words/{id}`
-- `POST /api/words/{id}/samples`
-- `POST /api/words/{id}/image`
-- `POST /api/words/{id}/audio`
+{
+  "level": "A2"
+}
+```
 
-### 4. 6 tekrar algoritması
 
-Bu proje için kritik nokta budur.
+- `GET /api/User/profile`
+```http
+GET http://localhost:5000/api/User/profile
+Authorization: Bearer <accessToken>
+```
 
-Önerilen mantık:
 
-1. Kullanıcıya önce yeni kelimeler tanımlanır.
-2. Her kelime için `SuccessStage = 0` ile başlanır.
-3. Kullanıcı doğru cevap verdikçe bir sonraki aşamaya geçilir.
-4. Sonraki gösterim tarihi stage'e göre hesaplanır.
-5. Kullanıcı yanlış cevap verirse stage sıfırlanır.
-6. Son stage tamamlanınca kelime `IsLearned = true` olur.
+- `POST /api/Word/add`
+```http
+POST http://localhost:5000/api/Word/add
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 
-Önerilen tekrar aralıkları:
+{
+  "engWordName": "book",
+  "turWordName": "kitap",
+  "level": "FromUsers"
+}
+```
 
-- Stage 0 -> aynı gün veya öğrenme kaydı
-- Stage 1 -> `+1 day`
-- Stage 2 -> `+7 days`
-- Stage 3 -> `+30 days`
-- Stage 4 -> `+90 days`
-- Stage 5 -> `+180 days`
-- Stage 6 -> `+365 days`
+  
+- `GET /api/Word/get-myword`
+```http
+GET http://localhost:5000/api/Word/get-myword
+Authorization: Bearer <accessToken>
+```
 
-Uygulamada karar:
+  
+- `GET /api/Word/daily-word`
+```http
+GET http://localhost:5000/api/Word/daily-word
+Authorization: Bearer <accessToken>
+```
 
-- "İlk karşılaşma" ayrı bir öğrenme anı mı sayılacak, yoksa ilk doğru cevap stage 1 mi olacak?
-- Bunu backend tarafında tek bir servis üzerinden standartlaştırmak gerekir
 
-### 5. Günlük test planı üretme
+- `POST /api/Word/test-result`
+```http
+POST http://localhost:5000/api/Word/test-result
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 
-Backend her gün kullanıcı için şu iki kaynaktan soru toplamalı:
+[
+  {
+    "wordId": 12,
+    "isCorrect": true
+  },
+  {
+    "wordId": 13,
+    "isCorrect": false
+  }
+]
+```
 
-- Bugün tekrarı gelen kelimeler
-- Kullanıcının ayarına göre yeni eklenecek kelimeler
 
-Gereken endpoint'ler:
+- `GET /api/Wordle/new-game`
+```http
+GET http://localhost:5000/api/Wordle/new-game
+Authorization: Bearer <accessToken>
+```
 
-- `GET /api/study/today`
-- `POST /api/study/submit-answer`
-- `POST /api/study/finish-session`
 
-`GET /api/study/today` cevabı şu bilgileri dönmeli:
+- `GET /api/WordChain/get-word-chain`
+```http
+GET http://localhost:5000/api/WordChain/get-word-chain
+Authorization: Bearer <accessToken>
+```
+  
+- `GET /api/Analysis/report`
+```http
+GET http://localhost:5000/api/Analysis/report
+Authorization: Bearer <accessToken>
+```
 
-- bugün sorulacak kelimeler
-- hangileri tekrar, hangileri yeni
-- toplam soru sayısı
-- cevap formatı
-
-### 6. Raporlama
-
-Gereken endpoint'ler:
-
-- `GET /api/reports/progress`
-- `GET /api/reports/learned-words`
-- `GET /api/reports/success-rate`
-- `GET /api/reports/printable`
-
-Rapor içinde olması gereken veriler:
-
-- toplam kelime
-- öğrenilen kelime
-- öğrenme aşamasında olan kelime
-- başarı oranı
-- günlük/haftalık performans
-
-### 7. Wordle modülü
-
-Wordle benzeri modül için backend'de gerekenler:
-
-- öğrenilmiş kelimeler havuzu
-- günlük kelime seçimi
-- deneme kayıtları
-
-Gereken endpoint'ler:
-
-- `GET /api/wordle/today`
-- `POST /api/wordle/guess`
-- `GET /api/wordle/history`
-
-### 8. LLM modülü
-
-Bu modül bonus ama yapılacaksa backend'de ayrı tutulmalı.
-
-Amaç:
-
-- Kullanıcının öğrendiği kelimelerle kısa hikaye üretmek
-- Hikayeye uygun görsel üretmek
-
-Gereken yapı:
-
-- prompt oluşturma servisi
-- LLM çağrısı
-- üretilen hikaye kaydı
-- opsiyonel görsel URL veya dosya kaydı
-
-Gereken endpoint'ler:
-
-- `POST /api/llm/story`
-- `GET /api/llm/story-history`
 
 ## Frontend'de Yapılması Gerekenler
 

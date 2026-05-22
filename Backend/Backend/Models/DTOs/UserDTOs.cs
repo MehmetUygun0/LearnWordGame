@@ -25,7 +25,6 @@
     }
     public class RefreshTokenDto
     {
-        public required string AccessToken { get; set; }
         public required string RefreshToken { get; set; }
     }
     public class ProfileLevelStatDto
@@ -41,5 +40,13 @@
         public required int TotalLearnedWords { get; set; }
         public required int DailyNewWords { get; set; }
         public required List<ProfileLevelStatDto> LevelBasedLearnedWords { get; set; }
+    }
+    public class UpdateDailyWordsDto
+    {
+        public required int DailyNewWords { get; set; }
+    }
+    public class UpdatelevelDto
+    {
+        public required string Level { get; set; }
     }
 }

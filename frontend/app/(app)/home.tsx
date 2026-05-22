@@ -1,17 +1,23 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ExpoRouter from 'expo-router';
 
 import { AppButton } from '@/components/ui/AppButton';
+import { AnimatedCard } from '@/components/ui/AnimatedCard';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { AnimatedProgressBar } from '@/components/ui/AnimatedProgressBar';
+import { PulseIcon } from '@/components/ui/PulseIcon';
+import { ProgressMeter } from '@/components/ui/ProgressMeter';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
-import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatCard } from '@/components/ui/StatCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 import { DashboardSummary, getDashboardSummary } from '@/services/dashboard';
+
+const pixelAvatar = require('../../assets/images/pixel-profile-avatar.png');
 
 export default function HomeScreen() {
   const { router } = ExpoRouter;
@@ -32,78 +38,165 @@ export default function HomeScreen() {
     loadSummary();
   }, [user]);
 
-  const initials = summary?.initials ?? 'OU';
+  const firstName = summary?.userName?.split(' ')[0] || summary?.userName || 'Merhaba';
+  const progress = (summary?.progressPercent ?? 0) / 100;
 
   return (
-    <ScreenContainer scrollable>
-      <View style={styles.header}>
-        <SectionHeader
-          eyebrow="Ana ekran"
-          title={`Hoş geldin${summary?.userName ? `, ${summary.userName}` : ''}.`}
-          description="Günlük tekrar, yeni kart ve çalışma akışı bu merkezden başlayacak."
-        />
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials}</Text>
+    <ScreenContainer scrollable withBackgroundDecor>
+      <View style={styles.topRow}>
+        <View>
+          <Text style={styles.eyebrow}>Daily drop</Text>
+          <Text style={styles.greeting}>Hoş geldin, {firstName}</Text>
         </View>
+        <Pressable
+          onPress={() => router.push('/(app)/settings')}
+          style={({ pressed }) => [styles.avatar, pressed && styles.avatarPressed]}>
+          <Image source={pixelAvatar} style={styles.avatarImage} resizeMode="cover" />
+        </Pressable>
       </View>
 
-      {isLoading ? (
-        <SurfaceCard muted style={styles.loadingCard}>
-          <ActivityIndicator color={palette.text} />
-          <Text style={styles.loadingText}>Ana ekran özeti hazırlanıyor...</Text>
+      <AnimatedCard>
+      <SurfaceCard style={styles.hero} accent="primary">
+        {isLoading ? (
+          <View style={styles.loadingInline}>
+            <ActivityIndicator color={palette.text} />
+            <Text style={styles.mutedText}>Günlük plan hazırlanıyor...</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.heroHeader}>
+              <View style={styles.heroIcon}>
+                <PulseIcon>
+                  <Ionicons name="flame-outline" size={24} color={palette.text} />
+                </PulseIcon>
+              </View>
+              <View style={styles.heroTitleBlock}>
+                <Text style={styles.heroTitle}>{summary?.challengeTitle ?? 'Bugünkü hedefin hazır'}</Text>
+                <Text style={styles.heroText}>
+                  {summary?.streakDays ?? 0} günlük streak yanıyor. {summary?.todayEstimatedCount ?? 0} kartla bugünü kapat.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.heroMetrics}>
+              <View>
+                <AnimatedNumber value={summary?.dailyNewWords ?? 0} style={styles.metricValue} />
+                <Text style={styles.metricLabel}>Yeni kelime</Text>
+              </View>
+              <View style={styles.metricDivider} />
+              <View>
+                <AnimatedNumber value={summary?.reviewWordCount ?? 0} style={styles.metricValue} />
+                <Text style={styles.metricLabel}>Tekrar</Text>
+              </View>
+              <View style={styles.metricDivider} />
+              <View>
+                <AnimatedNumber value={summary?.xp ?? 0} style={styles.metricValue} />
+                <Text style={styles.metricLabel}>XP</Text>
+              </View>
+            </View>
+
+            <AppButton
+              label="Çalışmaya başla"
+              icon="flash-outline"
+              onPress={() => router.push('/(app)/study')}
+            />
+          </>
+        )}
+      </SurfaceCard>
+      </AnimatedCard>
+
+      <AnimatedCard delay={80}>
+      <View style={styles.statsRow}>
+        <StatCard
+          eyebrow="Öğrenilen"
+          value={`${summary?.learnedWords ?? 0}`}
+          detail="kelime"
+          accent="success"
+        />
+        <StatCard
+          eyebrow="Seri"
+          value={`${summary?.streakDays ?? 0}`}
+          detail="gün"
+          accent="electric"
+        />
+      </View>
+      </AnimatedCard>
+
+      <AnimatedCard delay={140}>
+      <SurfaceCard muted>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Seviye ilerlemesi</Text>
+          <Text style={styles.percentText}>%{summary?.progressPercent ?? 0}</Text>
+        </View>
+        <ProgressMeter progress={progress} />
+        <Text style={styles.mutedText}>Düzenli tekrar yaptıkça bu seviye tamamlanmaya yaklaşır.</Text>
+      </SurfaceCard>
+      </AnimatedCard>
+
+      <AnimatedCard delay={190}>
+      <SurfaceCard accent="secondary">
+          <View style={styles.badgeRow}>
+            <View style={styles.challengeIcon}>
+              <Ionicons name="trophy-outline" size={22} color={palette.background} />
+            </View>
+          <View style={styles.heroTitleBlock}>
+            <Text style={styles.actionTitle}>Rozet hedefi</Text>
+            <Text style={styles.actionText}>3 doğru cevap daha al, “Seri Ustası” rozetini aç.</Text>
+          </View>
+        </View>
+        <AnimatedProgressBar progress={0.68} />
+      </SurfaceCard>
+      </AnimatedCard>
+
+      <View style={styles.actionGrid}>
+        <SurfaceCard style={styles.actionCard}>
+          <View style={styles.actionIcon}>
+            <Ionicons name="add-circle-outline" size={21} color={palette.secondary} />
+          </View>
+          <Text style={styles.actionTitle}>Kelime ekle</Text>
+          <Text style={styles.actionText}>Kendi çalışma havuzunu büyüt.</Text>
+          <AppButton
+            label="Kelime yönetimi"
+            variant="secondary"
+            icon="add-circle-outline"
+            onPress={() => router.push('/(app)/words')}
+          />
         </SurfaceCard>
-      ) : (
-        <>
-          <View style={styles.statsRow}>
-            <StatCard eyebrow="Öğrenilen" value={`${summary?.learnedWords ?? 0} kelime`} />
-            <StatCard
-              eyebrow="Günlük yeni kelime"
-              value={`${summary?.dailyNewWords ?? 0} kelime`}
-              accent="secondary"
+
+        <SurfaceCard style={styles.actionCard}>
+          <View style={styles.actionIconElectric}>
+            <Ionicons name="game-controller-outline" size={21} color={palette.electric} />
+          </View>
+          <Text style={styles.actionTitle}>Mini oyunlar</Text>
+          <Text style={styles.actionText}>Wordle ve hikaye modu ile kelimeleri canlı tut.</Text>
+          <View style={styles.splitActions}>
+            <AppButton
+              label="Wordle"
+              variant="secondary"
+              icon="grid-outline"
+              onPress={() => router.push('/(app)/wordle')}
+            />
+            <AppButton
+              label="Word Chain"
+              variant="ghost"
+              icon="sparkles-outline"
+              onPress={() => router.push('/(app)/story-lab')}
             />
           </View>
+        </SurfaceCard>
 
-          <SurfaceCard muted>
-            <Text style={styles.summaryLabel}>Bugünkü akış</Text>
-            <Text style={styles.summaryText}>
-              Bu seviyede havuzda {summary?.levelLibraryCount ?? 0} kelime var. Çalışma ekranı bugün yaklaşık {summary?.todayEstimatedCount ?? 0} kart gösterecek şekilde hazırlandı.
-            </Text>
-          </SurfaceCard>
-        </>
-      )}
-
-      <SurfaceCard>
-        <View style={styles.featureIcon}>
-          <Ionicons name="sparkles-outline" size={22} color={palette.secondary} />
-        </View>
-        <Text style={styles.featureTitle}>Kelime havuzu</Text>
-        <Text style={styles.featureText}>
-          Veritabanındaki kelimeler seviye bazlı olarak listelenecek. Buradan doğrudan kelime havuzuna geçebilirsin.
-        </Text>
-        <AppButton label="Kelime havuzunu aç" onPress={() => router.push('/(app)/words')} />
-      </SurfaceCard>
-
-      <SurfaceCard muted>
-        <View style={styles.featureIconSecondary}>
-          <Ionicons name="flash-outline" size={22} color={palette.text} />
-        </View>
-        <Text style={styles.featureTitle}>Bugünkü çalışma</Text>
-        <Text style={styles.featureText}>
-          Study endpointi henüz backendde yok. Buna rağmen ekran akışı hazır; mevcut seviyene göre örnek oturumu açabilirsin.
-        </Text>
-        <AppButton
-          label="Çalışma ekranına git"
-          variant="secondary"
-          onPress={() => router.push('/(app)/study')}
-        />
-      </SurfaceCard>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Hızlı özet</Text>
-        <SurfaceCard style={styles.summaryCard} muted>
-          <Text style={styles.summaryLabel}>Mevcut seviye</Text>
-          <Text style={styles.summaryValue}>{summary?.level ?? 'A1'}</Text>
-          <Text style={styles.summaryText}>Bu veri backend profil endpointinden okunuyor.</Text>
+        <SurfaceCard style={styles.actionCard}>
+          <View style={styles.actionIconAccent}>
+            <Ionicons name="stats-chart-outline" size={21} color={palette.accent} />
+          </View>
+          <Text style={styles.actionTitle}>İlerlemeyi gör</Text>
+          <Text style={styles.actionText}>Seviye dağılımını ve hedeflerini incele.</Text>
+          <AppButton
+            label="Raporu aç"
+            variant="ghost"
+            icon="stats-chart-outline"
+            onPress={() => router.push('/(app)/report')}
+          />
         </SurfaceCard>
       </View>
     </ScreenContainer>
@@ -111,83 +204,173 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: spacing.md,
+  },
+  eyebrow: {
+    ...typography.label,
+    color: palette.secondary,
+    textTransform: 'uppercase',
+  },
+  greeting: {
+    ...typography.display,
+    color: palette.text,
   },
   avatar: {
     width: 52,
     height: 52,
     borderRadius: radius.pill,
-    backgroundColor: palette.primarySoft,
+    backgroundColor: palette.backgroundElevated,
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: palette.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarPressed: {
+    opacity: 0.84,
+    transform: [{ scale: 0.96 }],
+  },
+  hero: {
+    gap: spacing.lg,
+  },
+  loadingInline: {
+    minHeight: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignItems: 'center',
+  },
+  heroIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: palette.electric,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    ...typography.label,
+  heroTitleBlock: {
+    flex: 1,
+  },
+  heroTitle: {
+    ...typography.title,
     color: palette.text,
+  },
+  heroText: {
+    ...typography.body,
+    color: palette.textMuted,
+  },
+  heroMetrics: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: radius.lg,
+    backgroundColor: palette.backgroundElevated,
+    borderWidth: 1,
+    borderColor: palette.borderSoft,
+    padding: spacing.md,
+  },
+  metricValue: {
+    ...typography.title,
+    color: palette.text,
+  },
+  metricLabel: {
+    ...typography.caption,
+    color: palette.textFaint,
+  },
+  metricDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: palette.borderSoft,
   },
   statsRow: {
     flexDirection: 'row',
     gap: spacing.md,
   },
-  loadingCard: {
-    minHeight: 120,
+  sectionHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  loadingText: {
-    ...typography.body,
-    color: palette.textMuted,
-  },
-  featureIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: palette.secondarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureIconSecondary: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: palette.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureTitle: {
-    ...typography.title,
-    color: palette.text,
-  },
-  featureText: {
-    ...typography.body,
-    color: palette.textMuted,
-  },
-  section: {
-    gap: spacing.sm,
+    justifyContent: 'space-between',
   },
   sectionTitle: {
     ...typography.cardTitle,
     color: palette.text,
   },
-  summaryCard: {
-    gap: spacing.xs,
-  },
-  summaryLabel: {
+  percentText: {
     ...typography.label,
+    color: palette.accent,
+  },
+  mutedText: {
+    ...typography.body,
     color: palette.textMuted,
   },
-  summaryValue: {
-    ...typography.display,
+  actionGrid: {
+    gap: spacing.md,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  challengeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: palette.secondary,
+    shadowColor: palette.secondary,
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionCard: {
+    gap: spacing.sm,
+  },
+  actionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.md,
+    backgroundColor: palette.secondarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionIconAccent: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.md,
+    backgroundColor: palette.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionIconElectric: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.md,
+    backgroundColor: palette.electricSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splitActions: {
+    gap: spacing.sm,
+  },
+  actionTitle: {
+    ...typography.cardTitle,
     color: palette.text,
   },
-  summaryText: {
+  actionText: {
     ...typography.body,
     color: palette.textMuted,
   },

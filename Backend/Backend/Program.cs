@@ -109,7 +109,6 @@ builder.Services.AddScoped<EmailService>();
 
 
 var app = builder.Build();
-app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {
@@ -124,6 +123,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseAuthentication();
+app.UseCors();
 app.UseAuthorization();
 
 app.MapControllers();

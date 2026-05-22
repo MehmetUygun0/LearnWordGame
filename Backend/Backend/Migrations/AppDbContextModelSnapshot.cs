@@ -75,6 +75,9 @@ namespace Backend.Migrations
                     b.Property<int>("NumberOfNewWords")
                         .HasColumnType("int");
 
+                    b.Property<int>("SkipCount")
+                        .HasColumnType("int");
+
                     b.Property<int>("TotalWordsLearned")
                         .HasColumnType("int");
 
@@ -84,9 +87,6 @@ namespace Backend.Migrations
                     b.Property<string>("UserLevel")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("WordCount")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -110,9 +110,6 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Picture")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TurWordName")
                         .IsRequired()

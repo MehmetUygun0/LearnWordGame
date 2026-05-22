@@ -55,14 +55,14 @@ export default function RegisterScreen() {
   };
 
   return (
-    <ScreenContainer scrollable contentStyle={styles.content}>
+    <ScreenContainer scrollable withBackgroundDecor contentStyle={styles.content}>
       <SectionHeader
         eyebrow="Yeni üye"
-        title="Kişisel kelime alanını oluştur."
-        description="Kayıt sonrası kullanıcı oturumu açılır ve uygulama akışı doğrudan ana ekrana taşınır."
+        title="Kendi çalışma alanını oluştur."
+        description="Hedeflerini takip etmek ve kelime havuzunu yönetmek için hesabını aç."
       />
 
-      <SurfaceCard>
+      <SurfaceCard accent="primary">
         <AppInput
           label="Kullanıcı adı"
           placeholder="bir kullanıcı adı seç"
@@ -77,7 +77,6 @@ export default function RegisterScreen() {
           value={email}
           onChangeText={setEmail}
           error={errors.email}
-          helperText="Mevcut backend kayıt isteğinde bu alanı bekliyor."
         />
         <AppInput
           label="Şifre"
@@ -87,13 +86,7 @@ export default function RegisterScreen() {
           onChangeText={setPassword}
           error={errors.password}
         />
-        <AppButton label="Kayıt Ol" onPress={handleRegister} loading={isSubmitting} />
-      </SurfaceCard>
-
-      <SurfaceCard muted>
-        <Text style={styles.noteTitle}>Kayıt notu</Text>
-        <Text style={styles.noteText}>Form doğrulaması mevcut backend DTO yapısına göre düzenlendi.</Text>
-        <Text style={styles.noteText}>Kayıt başarılı olursa frontend aynı bilgilerle otomatik giriş akışına geçer.</Text>
+        <AppButton label="Kayıt ol" icon="person-add-outline" onPress={handleRegister} loading={isSubmitting} />
       </SurfaceCard>
 
       <View style={styles.footerLinks}>

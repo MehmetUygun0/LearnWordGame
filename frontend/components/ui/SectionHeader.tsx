@@ -10,7 +10,6 @@ type SectionHeaderProps = {
   description?: string;
 };
 
-// Sayfa başlıklarının aynı hiyerarşiyle görünmesi için ortak başlık bloğu.
 export function SectionHeader({
   eyebrow,
   title,
@@ -31,7 +30,8 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     ...typography.label,
-    color: palette.secondary,
+    color: palette.accent,
+    textTransform: 'uppercase',
   },
   title: {
     ...typography.display,

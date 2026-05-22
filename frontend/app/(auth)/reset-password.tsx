@@ -63,14 +63,14 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <ScreenContainer scrollable contentStyle={styles.content}>
+    <ScreenContainer scrollable withBackgroundDecor contentStyle={styles.content}>
       <SectionHeader
         eyebrow="Şifre yenile"
-        title="Mailine gelen kod ile yeni şifreni oluştur."
-        description="Bu adım doğrudan reset-password endpointine bağlıdır ve gönderilen kodu backend üzerinde doğrular."
+        title="Yeni şifreni oluştur."
+        description="Mailine gelen 6 haneli kodu gir ve hesabına tekrar eriş."
       />
 
-      <SurfaceCard>
+      <SurfaceCard accent="primary">
         <AppInput
           label="Kullanıcı adı veya e-posta"
           placeholder="mail@ornek.com"
@@ -96,18 +96,11 @@ export default function ResetPasswordScreen() {
         />
         <AppButton
           label="Şifreyi güncelle"
+          icon="key-outline"
           onPress={handleResetPassword}
           loading={isSubmitting}
         />
       </SurfaceCard>
-
-      <SurfaceCard muted>
-        <Text style={styles.noteTitle}>Dikkat edilmesi gerekenler</Text>
-        <Text style={styles.noteText}>Kod alanı 6 haneli sayı bekler.</Text>
-        <Text style={styles.noteText}>Yeni şifre en az 6 karakter olmalıdır.</Text>
-        <Text style={styles.noteText}>Başarılı işlemden sonra kullanıcı giriş ekranına geri yönlendirilir.</Text>
-      </SurfaceCard>
-
       <Pressable onPress={() => router.push('/(auth)/login')}>
         <Text style={styles.link}>Giriş ekranına dön</Text>
       </Pressable>

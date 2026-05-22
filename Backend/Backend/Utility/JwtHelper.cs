@@ -25,7 +25,7 @@
                 issuer: "myApp",
                 audience: "myAppUsers",
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),
+                expires: DateTime.UtcNow.AddHours(1),
                 signingCredentials: creds
             );
 
