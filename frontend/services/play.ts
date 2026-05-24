@@ -22,7 +22,7 @@ export const getWordleToday = async (token?: string | null) => {
     });
     const payload = await readResponsePayload(response);
 
-    if (response.ok && payload?.engWordName) {
+    if (response.ok && payload?.engWordName && payload.engWordName !== 'error') {
       const answer = String(payload.engWordName).toLowerCase();
 
       return {
@@ -35,7 +35,7 @@ export const getWordleToday = async (token?: string | null) => {
     }
   }
 
-  const words = await getWords();
+  const words = await getWords(token);
   const word = words.find((item) => item.engWordName.length >= 5) ?? words[0];
 
   return {
@@ -82,7 +82,7 @@ export const getStoryLab = async (token?: string | null) => {
     }
   }
 
-  const words = await getWords();
+  const words = await getWords(token);
   const selectedWords = words.slice(0, 4);
 
   return {

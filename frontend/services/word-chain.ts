@@ -33,7 +33,7 @@ export const createWordChain = async (token?: string | null): Promise<WordChainR
     }
   }
 
-  const words = await getWords();
+  const words = await getWords(token);
   const chainWords = buildChain(words);
   const labels = chainWords.map((word) => word.engWordName);
 

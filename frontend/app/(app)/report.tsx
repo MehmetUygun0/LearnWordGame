@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AnimatedProgressBar } from '@/components/ui/AnimatedProgressBar';
@@ -12,12 +12,14 @@ import { StatCard } from '@/components/ui/StatCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
+import { exportReportAsPdf } from '@/services/report-export';
 import { getReportSummary, ReportSummary } from '@/services/report';
 
 export default function ReportScreen() {
   const { token, user } = useAuth();
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState('');
 
   useEffect(() => {
@@ -40,8 +42,23 @@ export default function ReportScreen() {
   const correctRate = summary?.correctRate ?? 0;
 
   const handleExport = async () => {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setExportNotice('Rapor hazırlanıyor. Paylaşılabilir çıktı burada görünecek.');
+    if (!summary || isExporting) {
+      return;
+    }
+
+    setIsExporting(true);
+    setExportNotice('');
+
+    try {
+      const uri = await exportReportAsPdf(summary);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setExportNotice(`PDF hazırlandı: ${uri.split('/').pop() ?? 'rapor.pdf'}`);
+    } catch {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Rapor oluşturulamadı', 'PDF çıktısı hazırlanırken bir sorun oluştu. Lütfen tekrar dene.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -158,9 +175,15 @@ export default function ReportScreen() {
 
           <SurfaceCard accent="secondary">
             <Text style={styles.sectionTitle}>Rapor çıktısı</Text>
-            <Text style={styles.caption}>PDF veya Excel formatında paylaşılabilir ilerleme özeti.</Text>
+            <Text style={styles.caption}>PDF formatında paylaşılabilir ve yazdırılabilir ilerleme özeti.</Text>
             {exportNotice ? <Text style={styles.noticeText}>{exportNotice}</Text> : null}
-            <AppButton label="Çıktı hazırla" icon="download-outline" onPress={handleExport} />
+            <AppButton
+              label={isExporting ? 'PDF hazırlanıyor' : 'PDF çıktısı hazırla'}
+              icon="download-outline"
+              loading={isExporting}
+              disabled={!summary}
+              onPress={handleExport}
+            />
           </SurfaceCard>
         </>
       )}

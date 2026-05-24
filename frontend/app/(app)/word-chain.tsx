@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 
@@ -17,7 +17,7 @@ export default function WordChainScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [savedMessage, setSavedMessage] = useState('');
 
-  const loadChain = async () => {
+  const loadChain = useCallback(async () => {
     setIsLoading(true);
     setSavedMessage('');
 
@@ -26,11 +26,11 @@ export default function WordChainScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     loadChain();
-  }, [token]);
+  }, [loadChain]);
 
   return (
     <ScreenContainer scrollable>

@@ -7,20 +7,32 @@ import { getWords } from '@/services/words';
 export type ReportSummary = {
   userName: string;
   level: string;
+  generatedAt?: string;
   totalLearnedWords: number;
+  totalTrackedWords?: number;
+  activeWords?: number;
+  userAddedWords?: number;
   dailyNewWords: number;
   correctRate: number;
   reviewDueCount: number;
   progressPercent: number;
+  narrativeSummary?: string;
+  strengths?: string[];
+  focusAreas?: string[];
+  recommendations?: string[];
   createdAt?: string;
   levelStats: {
     level: string;
     words: number;
+    totalWords?: number;
+    learnedPercentage?: number;
+    averageKnowledgeScore?: number;
   }[];
   stageStats: {
     stage: number;
     label: string;
     words: number;
+    percentage?: number;
   }[];
   weeklyTrend: {
     day: string;
@@ -52,7 +64,7 @@ export const getReportSummary = async (
     }
   }
 
-  const words = await getWords();
+  const words = await getWords(token);
   const totalLearnedWords = user?.totalLearnedWords ?? words.filter((word) => (word.stage ?? 0) >= 6).length;
   const dailyNewWords = user?.dailyNewWords ?? 10;
   const levelStats =
@@ -109,6 +121,9 @@ const normalizeApiReport = (payload: any, user: AuthUser | null): ReportSummary 
     ? payload.levelBreakdown.map((item: any) => ({
         level: String(item.level ?? '-'),
         words: Number(item.learnedWords ?? item.totalWords ?? 0),
+        totalWords: Number(item.totalWords ?? item.learnedWords ?? 0),
+        learnedPercentage: Math.round(Number(item.learnedPercentage ?? 0)),
+        averageKnowledgeScore: Math.round(Number(item.averageKnowledgeScore ?? 0)),
       }))
     : [];
 
@@ -117,17 +132,26 @@ const normalizeApiReport = (payload: any, user: AuthUser | null): ReportSummary 
         stage: stepToNumber(item.stage),
         label: String(item.stage ?? 'Yeni'),
         words: Number(item.wordCount ?? 0),
+        percentage: Math.round(Number(item.percentage ?? 0)),
       }))
     : [];
 
   return {
     userName: String(payload.userName ?? user?.userName ?? '-'),
     level: String(payload.currentLevel ?? user?.level ?? 'A1'),
+    generatedAt: payload.generatedAtUtc ? String(payload.generatedAtUtc) : undefined,
     totalLearnedWords: Number(payload.learnedWords ?? user?.totalLearnedWords ?? 0),
+    totalTrackedWords: Number(payload.totalTrackedWords ?? 0),
+    activeWords: Number(payload.activeWords ?? 0),
+    userAddedWords: Number(payload.userAddedWords ?? 0),
     dailyNewWords: user?.dailyNewWords ?? 10,
     correctRate: Math.round(Number(payload.estimatedKnowledgeScore ?? payload.overallMasteryPercentage ?? 0)),
     reviewDueCount: Number(payload.readyForReviewWords ?? 0),
     progressPercent: Math.round(Number(payload.overallMasteryPercentage ?? payload.learnedPercentage ?? 0)),
+    narrativeSummary: payload.narrativeSummary ? String(payload.narrativeSummary) : undefined,
+    strengths: toStringList(payload.strengths),
+    focusAreas: toStringList(payload.focusAreas),
+    recommendations: toStringList(payload.recommendations),
     createdAt: user?.createdAt,
     levelStats: levelStats.length ? levelStats : user?.levelBasedLearnedWords ?? [],
     stageStats: stageStats.length
@@ -146,6 +170,14 @@ const normalizeApiReport = (payload: any, user: AuthUser | null): ReportSummary 
     difficultWords: [],
     source: 'api',
   };
+};
+
+const toStringList = (value: unknown) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((item) => String(item)).filter(Boolean);
 };
 
 const stepToNumber = (stage: unknown) => {

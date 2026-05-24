@@ -106,16 +106,20 @@ const userCreatedWords: WordListItem[] = [];
 
 export const getWords = async (token?: string | null) => {
   if (token && token !== 'demo-session') {
-    const response = await apiRequest({
-      endpoint: config.ENDPOINTS.WORDS.MY_WORDS,
-      method: 'GET',
-      token,
-    });
+    try {
+      const response = await apiRequest({
+        endpoint: config.ENDPOINTS.WORDS.MY_WORDS,
+        method: 'GET',
+        token,
+      });
 
-    const payload = await readResponsePayload(response);
+      const payload = await readResponsePayload(response);
 
-    if (response.ok && Array.isArray(payload)) {
-      return payload.map(normalizeWord).sort(sortByLevel);
+      if (response.ok && Array.isArray(payload) && payload.length) {
+        return payload.map(normalizeWord).sort(sortByLevel);
+      }
+    } catch {
+      // Backend erişilemezse ekranlar demo havuzuyla kullanılabilir kalır.
     }
   }
 
@@ -124,20 +128,24 @@ export const getWords = async (token?: string | null) => {
 
 export const getDailyWords = async (token?: string | null) => {
   if (token && token !== 'demo-session') {
-    const response = await apiRequest({
-      endpoint: config.ENDPOINTS.WORDS.DAILY_WORD,
-      method: 'POST',
-      token,
-    });
+    try {
+      const response = await apiRequest({
+        endpoint: config.ENDPOINTS.WORDS.DAILY_WORD,
+        method: 'POST',
+        token,
+      });
 
-    const payload = await readResponsePayload(response);
+      const payload = await readResponsePayload(response);
 
-    if (!response.ok) {
-      throw new Error(getErrorMessage(payload, 'Günlük kelimeler alınamadı.'));
-    }
+      if (!response.ok) {
+        throw new Error(getErrorMessage(payload, 'Günlük kelimeler alınamadı.'));
+      }
 
-    if (Array.isArray(payload)) {
-      return payload.map(normalizeWord).sort(sortByLevel);
+      if (Array.isArray(payload) && payload.length) {
+        return payload.map(normalizeWord).sort(sortByLevel);
+      }
+    } catch {
+      return getWords(token);
     }
   }
 

@@ -1,6 +1,6 @@
 # LearnWordGame
 
-LearnWordGame, "6 sefer tekrar" prensibine dayanan bir kelime ezberleme sistemi olarak kurgulanmış bir okul projesidir. Depoda şu anda bir ASP.NET Core backend, bir Expo/React Native frontend ve birkaç bağımsız deneme projesi bulunur. Bu README, hem mevcut kodun ne yaptığını hem de PDF'teki gereksinimlere göre projeyi nasıl tamamlamak gerektiğini açıklar.
+LearnWordGame, "6 sefer tekrar" prensibine dayanan bir kelime ezberleme sistemi olarak kurgulanmış bir okul projesidir. Depoda şu anda bir ASP.NET Core backend ve Expo/React Native frontend bulunur. Bu README, mevcut kodun son durumunu, kullanılan endpoint'leri ve PDF'teki gereksinimlere göre kalan işleri özetler.
 
 ## Projenin Amacı
 
@@ -30,15 +30,19 @@ ASP.NET Core Web API projesi.
 - `Backend/Backend/Migrations/`: mevcut migration dosyaları
 - `Backend/Backend/Utility/`: SHA256,EmailService,ReserPasswordCode... gibi yardımcı servisler
 
+### `frontend/`
+
+Expo Router tabanlı aktif mobil istemci.
+
+- `frontend/app/(auth)/`: login, register, forgot-password ve reset-password ekranları
+- `frontend/app/(app)/`: home, study, words, report, settings, wordle ve word-chain ekranları
+- `frontend/services/`: backend ile konuşan servis katmanı
+- `frontend/lib/config.ts`: API URL ve endpoint sabitleri
+- `frontend/lib/auth-context.tsx`: token saklama, refresh ve oturum yönetimi
+
 ### `react-native-frondend/`
 
-Expo tabanlı mobil istemci.
-
-- `app/_layout.tsx`: root layout
-- `app/(tabs)/_layout.tsx`: tab yapısı
-- `app/(tabs)/index.tsx`: şu anda kayıt ekranı benzeri deneme ekranı
-- `app/(tabs)/explore.tsx`: çoğunlukla Expo starter içeriği
-- `frontendDeneme.js`: bağımsız login denemesi
+Eski/deneme Expo klasörü. Aktif ürün geliştirmesi `frontend/` altında ilerler.
 
 
 ## Kullanılan Teknolojiler
@@ -85,7 +89,7 @@ Docker backend ve veritabanı sürüm farklılıklarını büyük ölçüde çö
 
 ## Mevcut Durum
 
-Şu an backend tarafında temel kullanıcı kayıt ve giriş mantığı var. Frontend tarafında ise ürün akışından çok başlangıç şablonu ve deneme ekranları bulunuyor. Yani proje fikri net, fakat PDF'teki tüm story'leri karşılayan ürün henüz tamamlanmış değil.
+Şu an backend tarafında auth, profil, kelime, günlük çalışma, test sonucu, analiz raporu, Wordle ve Word Chain endpoint'leri bulunur. Frontend tarafında bu endpoint'lere bağlanan ürün ekranları vardır. PDF'teki ana story'ler için akış kurulmuştur; ancak aşağıdaki "Kalan Kritik İşler" bölümündeki backend mantık düzeltmeleri yapılmadan proje tamamen doğru kabul edilmemelidir.
 
 ## PDF Gereksinimleri
 
@@ -262,6 +266,7 @@ POST http://localhost:5000/api/User/refresh
 Content-Type: application/json
 
 {
+  "accessToken": "<accessToken>",
   "refreshToken": "<refreshToken>"
 }
 ```
@@ -307,7 +312,11 @@ Content-Type: application/json
 {
   "engWordName": "book",
   "turWordName": "kitap",
-  "level": "FromUsers"
+  "level": "A1",
+  "picture": null,
+  "samples": [
+    "This book is new."
+  ]
 }
 ```
 
@@ -319,9 +328,9 @@ Authorization: Bearer <accessToken>
 ```
 
   
-- `GET /api/Word/daily-word`
+- `POST /api/Word/daily-word`
 ```http
-GET http://localhost:5000/api/Word/daily-word
+POST http://localhost:5000/api/Word/daily-word
 Authorization: Bearer <accessToken>
 ```
 
@@ -365,191 +374,61 @@ Authorization: Bearer <accessToken>
 ```
 
 
-## Frontend'de Yapılması Gerekenler
+## Frontend Son Durumu
 
-### 1. Mevcut starter ekranlarını kaldırmak
+Aktif frontend `frontend/` klasöründedir ve PDF'teki ana ekranlar ürün akışı olarak hazırlanmıştır.
 
-Şu an frontend'in önemli kısmı Expo örnek ekranı halinde. Önce ürün ekranlarına geçmek gerekir.
+- Auth ekranları backend auth endpoint'lerine bağlıdır.
+- Home/dashboard ekranı profil ve çalışma özetini gösterir.
+- Study ekranı `POST /api/Word/daily-word` ile günlük kelimeleri alır ve `POST /api/Word/test-result` ile sonucu kaydeder.
+- Words ekranı kullanıcının kelimelerini listeler ve `POST /api/Word/add` ile yeni kelime gönderir.
+- Settings ekranı günlük yeni kelime sayısını ve seviyeyi backend'e kaydeder.
+- Report ekranı `GET /api/Analysis/report` üzerinden rapor verisini okur.
+- Wordle ekranı `GET /api/Wordle/new-game` üzerinden kelime alır.
+- Word Chain ekranı `GET /api/WordChain/get-word-chain` üzerinden hikaye ve görsel çıktısını gösterir.
 
-İlk düzenlenecek dosyalar:
+Frontend servisleri backend erişilemediğinde veya eksik veri döndüğünde ekranların tamamen kırılmaması için demo/fallback havuzuna düşer. Bu fallback teslim demosunu kolaylaştırır; gerçek değerlendirmede backend'in doğru veri üretmesi gerekir.
 
-- `react-native-frondend/app/(tabs)/index.tsx`
-- `react-native-frondend/app/(tabs)/explore.tsx`
-- `react-native-frondend/app/(tabs)/_layout.tsx`
+## PDF'e Göre Kalan Kritik İşler
 
-### 2. Auth akışı
+Bu bölüm tamamlanmadan proje PDF isterleri açısından tamamen bitmiş sayılmamalıdır.
 
-Yapılacak ekranlar:
+1. 6 tekrar zamanlama algoritması PDF ile aynı olmalı:
+   - 1 gün
+   - 1 hafta
+   - 1 ay
+   - 3 ay
+   - 6 ay
+   - 1 yıl
 
-- login
-- register
-- forgot password
+2. `POST /api/Word/daily-word` boş tekrar listesinde hata vermemeli.
 
-Frontend tarafında yapılacaklar:
+3. `POST /api/Word/add` PDF'teki kelime modelini tam kaydetmeli:
+   - İngilizce kelime
+   - Türkçe karşılık
+   - seviye
+   - birden fazla örnek cümle
+   - görsel
+   - opsiyonel ses alanı
 
-- form validation
-- loading state
-- hata mesajları
-- token saklama
-- giriş sonrası dashboard yönlendirmesi
+4. `POST /api/Word/test-result` sonucu `WordId` bazlı eşleştirmeli. Veritabanından gelen sıra ile request sırası aynı varsayılmamalı.
 
-### 3. Dashboard
+5. Wordle PDF'e göre öğrenilen kelimelerden seçilmeli. Bunun için `UserWordProgress.IsLearned == true` filtresi gerekir.
 
-Dashboard üzerinde görünmesi gerekenler:
+6. Word Chain de öğrenilen kelimelerden veya en azından kullanıcının gerçek çalışma havuzundan seçilmeli. Görselin uygulama içinde kalıcı kaydı netleştirilmeli.
 
-- bugün kaç yeni kelime var
-- bugün kaç tekrar var
-- başarı oranı
-- öğrenilen toplam kelime
-- "bugünkü teste başla" butonu
-
-### 4. Günlük test ekranı
-
-Test ekranında olması gerekenler:
-
-- kelime gösterimi
-- çoktan seçmeli veya yazmalı cevap
-- doğru/yanlış geri bildirimi
-- ilerleme çubuğu
-- oturum sonu özet
-
-### 5. Kelime yönetimi ekranları
-
-Öğretmen/admin veya içerik yöneten kullanıcı için:
-
-- kelime listeleme
-- yeni kelime ekleme
-- örnek cümle ekleme
-- görsel yükleme
-
-### 6. Ayarlar ekranı
-
-Burada kullanıcı şunları değiştirebilmeli:
-
-- günlük yeni kelime sayısı
-- günlük soru sayısı
-- opsiyonel zorluk seviyesi
-
-### 7. Rapor ekranı
-
-Burada gösterilecekler:
-
-- öğrenme yüzdesi
-- stage bazlı dağılım
-- son 7 gün başarı trendi
-- hangi kelimelerde zorlandığı
-
-### 8. Wordle ekranı
-
-Wordle modülü yapılacaksa:
-
-- günün kelimesi için tahmin alanı
-- harf bazlı geri bildirim
-- önceki tahminler listesi
-
-### 9. LLM ekranı
-
-Bonus modül yapılırsa:
-
-- seçilen kelimeler
-- üretilen hikaye
-- üretilen görsel
-
-## API Tasarım Önerisi
-
-Önerilen ana route grupları:
-
-- `/api/auth`
-- `/api/words`
-- `/api/study`
-- `/api/reports`
-- `/api/settings`
-- `/api/wordle`
-- `/api/llm`
-
-Örnek istekler:
-
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "userName": "oguzhan",
-  "password": "secret123"
-}
-```
-
-```http
-GET /api/study/today
-Authorization: Bearer <token>
-```
-
-```http
-POST /api/study/submit-answer
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "wordId": 12,
-  "answer": "kitap",
-  "isCorrect": true,
-  "quizSessionId": 5
-}
-```
-
-## Yol Haritası
-
-Projeyi bu sırayla geliştirmek en mantıklı yaklaşım olur.
-
-### Faz 1: Temel Temizlik
-
-- frontend starter ekranlarını kaldır
-- auth endpoint'lerini düzenle
-- query string yerine request body kullan
-- `.env` tabanlı konfigürasyon düzeni kur
-- README ve kurulum notlarını netleştir
-
-### Faz 2: Kelime Yönetimi
-
-- `Word` ve `WordSample` CRUD
-- görsel yükleme
-- admin kelime ekleme ekranı
-
-### Faz 3: Tekrar Algoritması
-
-- `WordProgress` modeli
-- tekrar zamanlama servisi
-- günlük soru üretimi
-- cevap gönderme ve stage güncelleme
-
-### Faz 4: Kullanıcı Deneyimi
-
-- dashboard
-- günlük test akışı
-- ayarlar ekranı
-- rapor ekranı
-
-### Faz 5: Bonus Modüller
-
-- Wordle
-- LLM hikaye ve görsel üretimi
-- gelişmiş istatistikler
+7. Rapor ekranı için gerçek çıktı/print/export akışı eklenmeli. PDF "kağıt üzerinden çıktı alınabilsin" isterini açıkça söylüyor.
 
 ## Önceliklendirme
 
-Teslim açısından minimum çalışan ürün için önce şu parçalar bitmeli:
+Teslim açısından önce düzeltilmesi gerekenler:
 
-1. Kullanıcı kaydı ve giriş
-2. Kelime ekleme
-3. 6 tekrar kuralına göre test modülü
-4. Ayarlar
-5. Analiz raporu
-
-Sonra:
-
-1. Wordle
-2. LLM modülü
-3. ek opsiyonel özellikler
+1. Backend 6 tekrar algoritması
+2. `daily-word` boş liste hatası
+3. kelime eklemede örnek cümle/görsel/seviye kaydı
+4. test sonucu kaydında `WordId` bazlı eşleştirme
+5. Wordle ve Word Chain için öğrenilen kelime filtresi
+6. rapor export/print
 
 ## Ortam Değişkenleri
 
@@ -557,7 +436,7 @@ Bu repo içinde örnek ortam dosyaları oluşturulmuştur:
 
 - `.env.example`
 - `Backend/.env.example`
-- `react-native-frondend/.env.example`
+- `frontend/.env.example`
 
 Amaç:
 
@@ -595,7 +474,7 @@ Gereksinimler:
 Çalıştırma:
 
 ```bash
-cd react-native-frondend
+cd frontend
 npm install
 npm start
 ```
@@ -610,6 +489,6 @@ npm run web
 
 ## Notlar
 
-- Frontend klasör adı şu anda `react-native-frondend` olarak yazılmış; ileride `frontend` veya `mobile` gibi daha temiz bir isim tercih edilebilir
+- Aktif frontend klasörü `frontend/` dizinidir. `react-native-frondend/` eski deneme klasörü olarak tutuluyorsa ürün akışında referans alınmamalıdır
 - Backend'de mevcut auth yapısı başlangıç seviyesinde, üretim seviyesi değildir
 - PDF'teki tarih örneklerinde yazım/tarih kaymaları var; teknik uygulamada tekrar algoritmasını tek bir net kurala bağlamak gerekir

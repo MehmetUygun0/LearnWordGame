@@ -111,6 +111,7 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen name="word/[id]" options={{ href: null }} />
+      <Tabs.Screen name="WordleGame" options={{ href: null }} />
       <Tabs.Screen name="story-lab" options={{ href: null }} />
     </Tabs>
   );
