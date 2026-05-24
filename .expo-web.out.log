@@ -1,0 +1,47 @@
+
+> learn-word-game-frontend@1.0.0 web
+> expo start --web --port 8081 --clear
+
+Starting project at C:\Users\USER\Desktop\Yazılım\LearnWordGame\frontend
+React Compiler enabled
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ node_modules\expo-router\node\render.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules\expo-router\entry.js ▓▓░░░░░░░░░░░░░░ 16.0% ( 4/10)
+λ node_modules\expo-router\node\render.js ░░░░░░░░░░░░░░░░  5.2% (10/48)
+Web node_modules\expo-router\entry.js ▓▓░░░░░░░░░░░░░░ 16.0% ( 4/10)
+λ node_modules\expo-router\node\render.js ▓░░░░░░░░░░░░░░░  6.3% ( 38/197)
+Web node_modules\expo-router\entry.js ▓▓░░░░░░░░░░░░░░ 16.0% ( 4/10)
+λ node_modules\expo-router\node\render.js ▓░░░░░░░░░░░░░░░  6.3% ( 39/197)
+Web node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% (10/20)
+λ node_modules\expo-router\node\render.js ▓▓░░░░░░░░░░░░░░ 12.8% ( 82/233)
+Web node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% (10/20)
+λ node_modules\expo-router\node\render.js ▓▓▓░░░░░░░░░░░░░ 22.7% (174/365)
+Web node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 29.5% (22/58)
+λ node_modules\expo-router\node\render.js ▓▓▓▓▓░░░░░░░░░░░ 36.1% (263/448)
+Web node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 29.5% ( 29/143)
+λ node_modules\expo-router\node\render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.5% (390/533)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 33.4% (235/421)
+λ node_modules\expo-router\node\render.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.4% (622/734)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 59.3% (560/727)
+λ node_modules\expo-router\node\render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 78.8% (798/899)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 79.3% (823/946)
+λ node_modules\expo-router\node\render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 91.1% (1009/1057)
+λ Bundled 39520ms node_modules\expo-router\node\render.js (1186 modules)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1176/1176)
+Web Bundled 47246ms node_modules\expo-router\entry.js (1176 modules)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1176/1176)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 34.6% ( 45/211)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 34.6% (113/289)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓░░░░░░░░░░ 41.2% (287/472)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.1% (768/909)
+Web Bundled 17318ms node_modules\expo-router\entry.js (1177 modules)
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 93ms node_modules\expo-router\node\render.js (1 module)
+Web Bundled 853ms node_modules\expo-router\entry.js (1 module)
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 118ms node_modules\expo-router\node\render.js (1 module)
+Web Bundled 657ms node_modules\expo-router\entry.js (1 module)

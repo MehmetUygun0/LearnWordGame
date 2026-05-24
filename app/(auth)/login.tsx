@@ -1,92 +1,182 @@
-import React, { useState } from "react";
-import { Link, router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+// @ts-nocheck
+import React, { useState } from 'react';
+import * as ExpoRouter from 'expo-router';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
-import { AppButton } from "../../components/ui/AppButton";
-import { AppInput } from "../../components/ui/AppInput";
-import { ScreenContainer } from "../../components/ui/ScreenContainer";
-import { SectionHeader } from "../../components/ui/SectionHeader";
-import { SurfaceCard } from "../../components/ui/SurfaceCard";
-import { useAuth } from "../../lib/auth-context";
-import { palette, typography } from "../../constants/theme";
+import { AppButton } from '@/components/ui/AppButton';
+import { AppInput } from '@/components/ui/AppInput';
+import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { useAuth } from '@/lib/auth-context';
+import { palette, spacing, typography } from '@/constants/theme';
 
 export default function LoginScreen() {
-  const { login, enterDemo } = useAuth();
-  const [userName, setUserName] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { router } = ExpoRouter;
+  const { enterDemo, login } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({ username: '', password: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleLogin() {
-    const trimmedUserName = userName.trim();
+  const handleLogin = async () => {
+    const nextErrors = {
+      username: username.trim() ? '' : 'Kullanıcı adı zorunlu.',
+      password: password ? '' : 'Şifre zorunlu.',
+    };
 
-    if (!trimmedUserName || !password.trim()) {
-      setMessage("Kullanici adi ve sifre zorunlu.");
+    setErrors(nextErrors);
+
+    if (nextErrors.username || nextErrors.password) {
       return;
     }
 
-    setIsLoading(true);
-    setMessage("");
+    setIsSubmitting(true);
 
     try {
-      await login(trimmedUserName, password);
-      router.replace("/(app)/home");
+      await login({
+        userName: username,
+        password,
+      });
+      router.replace('/(app)/home');
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Giris basarisiz.");
+      Alert.alert(
+        'Giriş başarısız',
+        error instanceof Error ? error.message : 'Giriş sırasında bir sorun oluştu.'
+      );
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable withBackgroundDecor contentStyle={styles.content}>
       <SectionHeader
-        eyebrow="Story 1"
-        title="Kelime ezberleme oyununa giris yap."
-        description="Kayit, giris ve sifremi unuttum akislarini bu grupta topladik."
+        eyebrow="LearnWordGame"
+        title="Kelimeleri düzenli tekrarlarla öğren."
+        description="Günlük çalışma planına gir, kartlarını çöz ve ilerlemeni takip et."
       />
-      <SurfaceCard>
+
+      <SurfaceCard accent="secondary">
+        <Text style={styles.noteTitle}>Nasıl çalışır?</Text>
+        <View style={styles.onboardingRow}>
+          <OnboardingStep icon="repeat-outline" title="6 tekrar" text="Doğru bildikçe kelime yeni aralığa taşınır." />
+          <OnboardingStep icon="flame-outline" title="Streak" text="Günlük hedefini bitir, serini büyüt." />
+          <OnboardingStep icon="sparkles-outline" title="Oyun" text="Wordle ve Word Chain ile pekiştir." />
+        </View>
+      </SurfaceCard>
+
+      <SurfaceCard accent="primary">
         <AppInput
-          label="Kullanici adi"
-          value={userName}
-          onChangeText={setUserName}
-          placeholder="ogrenci01"
-          error={message ? message : undefined}
+          label="Kullanıcı adı"
+          placeholder="oguzhanuyar"
+          value={username}
+          onChangeText={setUsername}
+          error={errors.username}
         />
         <AppInput
-          label="Sifre"
+          label="Şifre"
+          placeholder="••••••••"
+          secureTextEntry
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
-          placeholder="******"
-          error={message ? " " : undefined}
+          error={errors.password}
         />
-        {message ? <Text style={styles.message}>{message}</Text> : null}
-        <AppButton label={isLoading ? "Giris yapiliyor..." : "Giris yap"} onPress={handleLogin} disabled={isLoading} />
-        <AppButton label="Demo ile devam et" variant="secondary" onPress={async () => {
-          await enterDemo();
-          router.replace("/(app)/home");
-        }} />
+        <AppButton label="Giriş yap" icon="log-in-outline" onPress={handleLogin} loading={isSubmitting} />
+        <AppButton
+          label="Hızlıca göz at"
+          variant="secondary"
+          icon="sparkles-outline"
+          onPress={async () => {
+            await enterDemo();
+            router.replace('/(app)/home');
+          }}
+        />
       </SurfaceCard>
-      <View style={styles.links}>
-        <Link href="/(auth)/register" style={styles.link}>Kayit ol</Link>
-        <Link href="/(auth)/forgot-password" style={styles.link}>Sifremi unuttum</Link>
+
+      <SurfaceCard muted>
+        <Text style={styles.noteTitle}>Bugün seni bekleyenler</Text>
+        <Text style={styles.noteText}>Kısa çalışma oturumu, kelime havuzu ve ilerleme raporu tek yerde.</Text>
+      </SurfaceCard>
+
+      <View style={styles.footerLinks}>
+        <Pressable onPress={() => router.push('/(auth)/register')}>
+          <Text style={styles.link}>Hesabın yok mu? Kayıt ol</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
+          <Text style={styles.linkMuted}>Şifremi unuttum</Text>
+        </Pressable>
       </View>
     </ScreenContainer>
   );
 }
 
+function OnboardingStep({ icon, title, text }) {
+  return (
+    <View style={styles.onboardingStep}>
+      <View style={styles.onboardingIcon}>
+        <Ionicons name={icon} size={18} color={palette.text} />
+      </View>
+      <Text style={styles.onboardingTitle}>{title}</Text>
+      <Text style={styles.onboardingText}>{text}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  links: {
-    flexDirection: "row",
-    justifyContent: "space-between"
+  content: {
+    justifyContent: 'center',
+  },
+  footerLinks: {
+    gap: spacing.sm,
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  noteTitle: {
+    ...typography.cardTitle,
+    color: palette.text,
+  },
+  noteText: {
+    ...typography.body,
+    color: palette.textMuted,
+  },
+  onboardingRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  onboardingStep: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: palette.backgroundElevated,
+    borderWidth: 1,
+    borderColor: palette.borderSoft,
+    padding: spacing.sm,
+    gap: spacing.xs,
+  },
+  onboardingIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: palette.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  onboardingTitle: {
+    ...typography.label,
+    color: palette.text,
+  },
+  onboardingText: {
+    ...typography.caption,
+    color: palette.textMuted,
+    fontSize: 10,
   },
   link: {
     ...typography.label,
-    color: palette.secondary
+    color: palette.primary,
   },
-  message: {
-    ...typography.caption,
-    color: palette.warning
-  }
+  linkMuted: {
+    ...typography.label,
+    color: palette.textFaint,
+  },
 });

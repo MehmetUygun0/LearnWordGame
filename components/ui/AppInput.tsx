@@ -1,33 +1,34 @@
-import React from "react";
-import { KeyboardTypeOptions, StyleSheet, Text, TextInput, View } from "react-native";
+// @ts-nocheck
+import React from 'react';
+import { KeyboardTypeOptions, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { palette, radius, spacing, typography } from "../../constants/theme";
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
-type Props = {
+type AppInputProps = {
   label: string;
-  value: string;
-  onChangeText: (value: string) => void;
+  value?: string;
+  onChangeText?: (text: string) => void;
   placeholder?: string;
   secureTextEntry?: boolean;
   keyboardType?: KeyboardTypeOptions;
-  helperText?: string;
   error?: string;
+  helperText?: string;
   multiline?: boolean;
+  editable?: boolean;
 };
 
-export function AppInput(props: Props) {
-  const {
-    label,
-    value,
-    onChangeText,
-    placeholder,
-    secureTextEntry,
-    keyboardType,
-    helperText,
-    error,
-    multiline
-  } = props;
-
+export function AppInput({
+  label,
+  value = '',
+  onChangeText,
+  placeholder = '',
+  secureTextEntry = false,
+  keyboardType = 'default',
+  error,
+  helperText,
+  multiline = false,
+  editable = true,
+}: AppInputProps) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
@@ -39,46 +40,51 @@ export function AppInput(props: Props) {
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         multiline={multiline}
-        textAlignVertical={multiline ? "top" : "center"}
-        style={[styles.input, multiline && styles.multiline, error ? styles.errorBorder : null]}
+        textAlignVertical={multiline ? 'top' : 'center'}
+        selectionColor={palette.primary}
+        editable={editable}
+        style={[styles.input, multiline && styles.inputMultiline, !editable && styles.inputDisabled, error && styles.inputError]}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {!error && helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {!error && helperText ? <Text style={styles.helperText}>{helperText}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
-    gap: spacing.xs
+    gap: spacing.xs,
   },
   label: {
     ...typography.label,
-    color: palette.text
+    color: palette.textMuted,
   },
   input: {
     ...typography.body,
     minHeight: 52,
-    borderRadius: radius.md,
-    backgroundColor: palette.cardMuted,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    color: palette.text,
+    backgroundColor: palette.backgroundElevated,
     borderWidth: 1,
     borderColor: palette.border,
-    color: palette.text,
-    paddingHorizontal: spacing.md
   },
-  multiline: {
-    minHeight: 96,
-    paddingVertical: spacing.sm
+  inputMultiline: {
+    minHeight: 92,
+    paddingTop: spacing.md,
   },
-  helper: {
+  inputError: {
+    borderColor: palette.danger,
+  },
+  inputDisabled: {
+    opacity: 0.68,
+  },
+  helperText: {
     ...typography.caption,
-    color: palette.textFaint
+    color: palette.textFaint,
   },
-  error: {
+  errorText: {
     ...typography.caption,
-    color: palette.danger
+    color: palette.danger,
   },
-  errorBorder: {
-    borderColor: palette.danger
-  }
 });

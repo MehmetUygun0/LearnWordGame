@@ -1,75 +1,112 @@
-import React from "react";
-import { Pressable, StyleSheet, Text, ViewStyle } from "react-native";
+// @ts-nocheck
+import React from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { palette, radius, spacing, typography } from "../../constants/theme";
+import { palette, radius, shadows, spacing, typography } from '@/constants/theme';
 
-type Props = {
+type AppButtonProps = {
   label: string;
-  onPress: () => void;
+  onPress?: () => void;
+  variant?: 'primary' | 'secondary' | 'ghost';
   disabled?: boolean;
-  variant?: "primary" | "secondary" | "ghost";
-  style?: ViewStyle;
+  loading?: boolean;
+  fullWidth?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
 };
 
-export function AppButton({ label, onPress, disabled, variant = "primary", style }: Props) {
+export function AppButton({
+  label,
+  onPress,
+  variant = 'primary',
+  disabled = false,
+  loading = false,
+  fullWidth = true,
+  icon,
+}: AppButtonProps) {
   return (
     <Pressable
-      disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [
+      disabled={disabled || loading}
+      style={({ hovered, pressed }) => [
         styles.base,
-        variant === "primary" && styles.primary,
-        variant === "secondary" && styles.secondary,
-        variant === "ghost" && styles.ghost,
-        pressed && !disabled && styles.pressed,
-        disabled && styles.disabled,
-        style
+        fullWidth && styles.fullWidth,
+        variantStyles[variant],
+        variant === 'primary' && shadows.glow,
+        (disabled || loading) && styles.disabled,
+        hovered && styles.hovered,
+        pressed && styles.pressed,
       ]}>
-      <Text
-        style={[
-          styles.label,
-          variant === "ghost" ? styles.ghostLabel : styles.solidLabel
-        ]}>
-        {label}
-      </Text>
+      {loading ? (
+        <ActivityIndicator color={labelStyles[variant].color} />
+      ) : (
+        <View style={styles.content}>
+          {icon ? <Ionicons name={icon} size={18} color={labelStyles[variant].color} /> : null}
+          <Text style={[styles.label, labelStyles[variant]]} numberOfLines={1}>
+            {label}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 50,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg
-  },
-  primary: {
-    backgroundColor: palette.primary
-  },
-  secondary: {
-    backgroundColor: palette.cardMuted,
+    minHeight: 52,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: palette.border
   },
-  ghost: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: palette.border
-  },
-  pressed: {
-    opacity: 0.88
-  },
-  disabled: {
-    opacity: 0.5
+  fullWidth: {
+    width: '100%',
   },
   label: {
-    ...typography.button
+    ...typography.button,
   },
-  solidLabel: {
-    color: palette.text
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
-  ghostLabel: {
-    color: palette.textMuted
-  }
+  hovered: {
+    transform: [{ translateY: -2 }],
+  },
+  pressed: {
+    transform: [{ scale: 0.97 }],
+    opacity: 0.88,
+  },
+  disabled: {
+    opacity: 0.48,
+  },
+});
+
+const variantStyles = StyleSheet.create({
+  primary: {
+    backgroundColor: palette.primary,
+    borderColor: palette.primaryStrong,
+  },
+  secondary: {
+    backgroundColor: palette.electricSoft,
+    borderColor: 'rgba(124, 108, 255, 0.34)',
+  },
+  ghost: {
+    backgroundColor: 'transparent',
+    borderColor: palette.border,
+  },
+});
+
+const labelStyles = StyleSheet.create({
+  primary: {
+    color: palette.text,
+  },
+  secondary: {
+    color: palette.text,
+  },
+  ghost: {
+    color: palette.textMuted,
+  },
 });

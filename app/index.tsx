@@ -1,15 +1,16 @@
-import React from "react";
-import { Redirect } from "expo-router";
+// @ts-nocheck
+import React from 'react';
+import { Redirect } from 'expo-router';
+import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { useAuth } from '@/lib/auth-context';
 
-import { useAuth } from "../lib/auth-context";
-import { ScreenContainer } from "../components/ui/ScreenContainer";
-
-export default function IndexPage() {
-  const { isHydrating, isAuthenticated } = useAuth();
+// Uygulama ilk açıldığında oturum durumuna göre doğru akışa yönlendiriyoruz.
+export default function IndexScreen() {
+  const { isAuthenticated, isHydrating } = useAuth();
 
   if (isHydrating) {
-    return <ScreenContainer />;
+    return <ScreenContainer withBackgroundDecor={false} />;
   }
 
-  return <Redirect href={isAuthenticated ? "/(app)/home" : "/(auth)/login"} />;
+  return <Redirect href={isAuthenticated ? '/(app)/home' : '/(auth)/login'} />;
 }
