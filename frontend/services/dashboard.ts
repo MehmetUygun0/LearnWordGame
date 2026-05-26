@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { AuthUser } from '@/services/auth';
 import { getStudyOverview } from '@/services/study';
 import { getWordsForLevel } from '@/services/words';

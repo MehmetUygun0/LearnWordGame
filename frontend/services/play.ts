@@ -1,4 +1,3 @@
-// @ts-nocheck
 import config from '@/lib/config';
 import { apiRequest, readResponsePayload } from '@/lib/api';
 import { getWords } from '@/services/words';

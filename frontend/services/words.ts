@@ -1,6 +1,5 @@
-// @ts-nocheck
-import config from '@/lib/config';
-import { apiRequest, getErrorMessage, readResponsePayload } from '@/lib/api';
+import { getErrorMessage } from '@/lib/api';
+import { fetchDailyWords, fetchMyWords, postUserWord, postWordTestResults } from '@/services/api/words-api';
 
 export type WordLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 
@@ -107,13 +106,7 @@ const userCreatedWords: WordListItem[] = [];
 export const getWords = async (token?: string | null) => {
   if (token && token !== 'demo-session') {
     try {
-      const response = await apiRequest({
-        endpoint: config.ENDPOINTS.WORDS.MY_WORDS,
-        method: 'GET',
-        token,
-      });
-
-      const payload = await readResponsePayload(response);
+      const { response, payload } = await fetchMyWords(token);
 
       if (response.ok && Array.isArray(payload) && payload.length) {
         return payload.map(normalizeWord).sort(sortByLevel);
@@ -129,13 +122,7 @@ export const getWords = async (token?: string | null) => {
 export const getDailyWords = async (token?: string | null) => {
   if (token && token !== 'demo-session') {
     try {
-      const response = await apiRequest({
-        endpoint: config.ENDPOINTS.WORDS.DAILY_WORD,
-        method: 'POST',
-        token,
-      });
-
-      const payload = await readResponsePayload(response);
+      const { response, payload } = await fetchDailyWords(token);
 
       if (!response.ok) {
         throw new Error(getErrorMessage(payload, 'Günlük kelimeler alınamadı.'));
@@ -163,14 +150,7 @@ export const saveWordTestResults = async ({
     return;
   }
 
-  const response = await apiRequest({
-    endpoint: config.ENDPOINTS.WORDS.TEST_RESULT,
-    method: 'POST',
-    token,
-    body: JSON.stringify(results),
-  });
-
-  const payload = await readResponsePayload(response);
+  const { response, payload } = await postWordTestResults(token, results);
 
   if (!response.ok) {
     throw new Error(getErrorMessage(payload, 'Test sonucu kaydedilemedi.'));
@@ -214,20 +194,16 @@ export const createUserWord = async ({
     return createWordPreview(draft);
   }
 
-  const response = await apiRequest({
-    endpoint: config.ENDPOINTS.WORDS.ADD,
-    method: 'POST',
+  const { response, payload } = await postUserWord({
     token,
-    body: JSON.stringify({
+    body: {
       engWordName: draft.engWordName.trim(),
       turWordName: draft.turWordName.trim(),
       level: draft.level,
       picture: draft.generatedImageUrl ?? null,
       samples: draft.samples,
-    }),
+    },
   });
-
-  const payload = await readResponsePayload(response);
 
   if (!response.ok) {
     throw new Error(getErrorMessage(payload, 'Kelime backend tarafına kaydedilemedi.'));

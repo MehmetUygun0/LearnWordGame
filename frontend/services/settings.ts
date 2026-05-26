@@ -1,4 +1,3 @@
-// @ts-nocheck
 import config from '@/lib/config';
 import { apiRequest, getErrorMessage, readResponsePayload } from '@/lib/api';
 import { AuthUser } from '@/services/auth';

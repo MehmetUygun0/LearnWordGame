@@ -1,7 +1,7 @@
-// @ts-nocheck
 import config from '@/lib/config';
 import { apiRequest, readResponsePayload } from '@/lib/api';
 import { WordListItem, getWords } from '@/services/words';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export type WordChainResult = {
   words: WordListItem[];
@@ -46,6 +46,28 @@ export const createWordChain = async (token?: string | null): Promise<WordChainR
   };
 };
 
+export const saveWordChainImage = async (imageUri: string) => {
+  if (!imageUri) {
+    throw new Error('Kaydedilecek görsel bulunamadı.');
+  }
+
+  const directory = `${FileSystem.documentDirectory}word-chain/`;
+  await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+
+  const fileUri = `${directory}word-chain-${Date.now()}.png`;
+
+  if (imageUri.startsWith('data:image')) {
+    const base64 = imageUri.split(',')[1];
+    await FileSystem.writeAsStringAsync(fileUri, base64, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return fileUri;
+  }
+
+  const result = await FileSystem.downloadAsync(imageUri, fileUri);
+  return result.uri;
+};
+
 const buildChain = (words: WordListItem[]) => {
   const available = words.filter((word) => word.engWordName.length >= 3);
   const result: WordListItem[] = [];
@@ -76,7 +98,7 @@ const buildChain = (words: WordListItem[]) => {
     id: 9000 + index,
     engWordName: word,
     turWordName: ['beyin', 'gece', 'kaplan', 'kızılgerdan', 'asil'][index],
-    level: 'A1',
+    level: 'A1' as const,
     pictureUrl: null,
     audioUrl: null,
     samples: [],

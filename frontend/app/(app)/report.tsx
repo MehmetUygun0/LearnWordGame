@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ActivityIndicator, Alert, Animated, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AnimatedProgressBar } from '@/components/ui/AnimatedProgressBar';
@@ -10,6 +10,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatCard } from '@/components/ui/StatCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { FeedbackState } from '@/components/ui/FeedbackState';
 import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 import { exportReportAsPdf } from '@/services/report-export';
@@ -21,6 +22,7 @@ export default function ReportScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState('');
+  const [activeSection, setActiveSection] = useState<'overview' | 'analysis' | 'export'>('overview');
 
   useEffect(() => {
     const loadSummary = async () => {
@@ -36,7 +38,9 @@ export default function ReportScreen() {
   }, [token, user]);
 
   const levelStats = summary?.levelStats ?? [];
+  const topicStats = summary?.topicStats ?? [];
   const maxWords = Math.max(...levelStats.map((item) => item.words), 1);
+  const maxTopicWords = Math.max(...topicStats.map((item) => item.words), 1);
   const maxStageWords = Math.max(...(summary?.stageStats ?? []).map((item) => item.words), 1);
   const progress = (summary?.progressPercent ?? 0) / 100;
   const correctRate = summary?.correctRate ?? 0;
@@ -75,12 +79,32 @@ export default function ReportScreen() {
       </View>
 
       {isLoading ? (
-        <SurfaceCard muted style={styles.loadingCard}>
-          <ActivityIndicator color={palette.text} />
-          <Text style={styles.caption}>Rapor hazırlanıyor...</Text>
-        </SurfaceCard>
+        <FeedbackState title="Rapor hazırlanıyor" description="İlerleme ve konu analizi hesaplanıyor." loading />
       ) : (
         <>
+          <View style={styles.segmented}>
+            {[
+              { id: 'overview', label: 'Özet' },
+              { id: 'analysis', label: 'Analiz' },
+              { id: 'export', label: 'Çıktı' },
+            ].map((item) => {
+              const isActive = activeSection === item.id;
+
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => setActiveSection(item.id)}
+                  style={[styles.segmentButton, isActive && styles.segmentButtonActive]}>
+                  <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {activeSection === 'overview' ? (
+            <>
           <SurfaceCard accent="primary" style={styles.progressCard}>
             <View style={styles.sectionHeader}>
               <View>
@@ -113,7 +137,11 @@ export default function ReportScreen() {
               ))}
             </View>
           </SurfaceCard>
+            </>
+          ) : null}
 
+          {activeSection === 'analysis' ? (
+            <>
           <SurfaceCard>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Son 7 gün</Text>
@@ -128,6 +156,34 @@ export default function ReportScreen() {
                   <Text style={styles.trendLabel}>{item.day}</Text>
                 </View>
               ))}
+            </View>
+          </SurfaceCard>
+
+          <SurfaceCard>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Konu bazlı başarı</Text>
+              <Text style={styles.caption}>Yüzdesel analiz</Text>
+            </View>
+            <View style={styles.topicList}>
+              {topicStats.map((item, index) => {
+                const progressWidth = Math.max(item.words / maxTopicWords, item.words ? 0.12 : 0);
+                const barColor = item.successRate >= 75 ? palette.lime : item.successRate >= 45 ? palette.accent : palette.primary;
+
+                return (
+                  <View key={`${item.topic}-${index}`} style={styles.topicRow}>
+                    <View style={styles.topicHeader}>
+                      <Text style={styles.topicTitle}>{item.topic}</Text>
+                      <Text style={styles.caption}>%{item.successRate}</Text>
+                    </View>
+                    <View style={styles.topicTrack}>
+                      <AnimatedHorizontalBar progress={progressWidth} color={barColor} />
+                    </View>
+                    <Text style={styles.topicDetail}>
+                      {item.learnedWords}/{item.words} öğrenilen kelime
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           </SurfaceCard>
 
@@ -172,7 +228,10 @@ export default function ReportScreen() {
               </View>
             ))}
           </SurfaceCard>
+            </>
+          ) : null}
 
+          {activeSection === 'export' ? (
           <SurfaceCard accent="secondary">
             <Text style={styles.sectionTitle}>Rapor çıktısı</Text>
             <Text style={styles.caption}>PDF formatında paylaşılabilir ve yazdırılabilir ilerleme özeti.</Text>
@@ -185,6 +244,7 @@ export default function ReportScreen() {
               onPress={handleExport}
             />
           </SurfaceCard>
+          ) : null}
         </>
       )}
     </ScreenContainer>
@@ -390,6 +450,62 @@ const styles = StyleSheet.create({
     width: 34,
     color: palette.textMuted,
     textAlign: 'right',
+  },
+  segmented: {
+    flexDirection: 'row',
+    borderRadius: radius.pill,
+    backgroundColor: palette.cardMuted,
+    borderWidth: 1,
+    borderColor: palette.borderSoft,
+    padding: 4,
+    gap: 4,
+  },
+  segmentButton: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  segmentButtonActive: {
+    backgroundColor: palette.primary,
+  },
+  segmentText: {
+    ...typography.label,
+    color: palette.textMuted,
+  },
+  segmentTextActive: {
+    color: palette.text,
+  },
+  topicList: {
+    gap: spacing.md,
+  },
+  topicRow: {
+    gap: spacing.xs,
+  },
+  topicHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  topicTitle: {
+    ...typography.label,
+    color: palette.text,
+    flex: 1,
+  },
+  topicTrack: {
+    height: 16,
+    borderRadius: radius.pill,
+    backgroundColor: palette.backgroundElevated,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: palette.borderSoft,
+  },
+  topicDetail: {
+    ...typography.caption,
+    color: palette.textFaint,
   },
   difficultRow: {
     borderRadius: radius.md,

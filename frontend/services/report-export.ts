@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
@@ -45,6 +44,17 @@ const buildReportHtml = (summary: ReportSummary) => {
           <td>${escapeHtml(item.label || `${item.stage}/6`)}</td>
           <td>${formatNumber(item.words)}</td>
           <td>%${formatNumber(item.percentage ?? 0)}</td>
+        </tr>`
+    )
+    .join('');
+  const topicRows = summary.topicStats
+    .map(
+      (item) => `
+        <tr>
+          <td>${escapeHtml(item.topic)}</td>
+          <td>${formatNumber(item.words)}</td>
+          <td>${formatNumber(item.learnedWords)}</td>
+          <td>%${formatNumber(item.successRate)}</td>
         </tr>`
     )
     .join('');
@@ -165,6 +175,14 @@ const buildReportHtml = (summary: ReportSummary) => {
         <table>
           <thead><tr><th>Seviye</th><th>Öğrenilen</th><th>Toplam</th><th>Öğrenme</th><th>Bilgi skoru</th></tr></thead>
           <tbody>${levelRows || '<tr><td colspan="5">Seviye verisi bulunmuyor.</td></tr>'}</tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h2>Konu Bazlı Başarı</h2>
+        <table>
+          <thead><tr><th>Konu</th><th>Kelime</th><th>Öğrenilen</th><th>Başarı</th></tr></thead>
+          <tbody>${topicRows || '<tr><td colspan="4">Konu analizi için kelime verisi bulunmuyor.</td></tr>'}</tbody>
         </table>
       </section>
 

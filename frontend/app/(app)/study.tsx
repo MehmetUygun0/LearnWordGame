@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { ActivityIndicator, Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedCard } from '@/components/ui/AnimatedCard';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
@@ -16,6 +16,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StageTimeline } from '@/components/ui/StageTimeline';
 import { StatCard } from '@/components/ui/StatCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { FeedbackState } from '@/components/ui/FeedbackState';
 import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 import {
@@ -165,7 +166,7 @@ export default function StudyScreen() {
 
     setFeedback(
       result.isCorrect
-        ? `${result.currentStepLabel}. Sonraki tekrar: ${result.nextReviewLabel}.`
+        ? `${result.isNearMiss ? 'Yakın cevap kabul edildi. ' : ''}${result.currentStepLabel}. Sonraki tekrar: ${result.nextReviewLabel}.`
         : `Doğru cevap: ${result.correctAnswer}. Bu kelime tekrar listesine döndü.`
     );
 
@@ -244,10 +245,7 @@ export default function StudyScreen() {
       </AnimatedCard>
 
       {isLoading ? (
-        <SurfaceCard muted style={styles.loadingState}>
-          <ActivityIndicator color={palette.text} />
-          <Text style={styles.loadingText}>Oturum hazırlanıyor...</Text>
-        </SurfaceCard>
+        <FeedbackState title="Oturum hazırlanıyor" description="Bugünkü kartlar backendden alınıyor." loading />
       ) : isSessionCompleted ? (
         <Animated.View style={{ transform: [{ scale: trophyScale }] }}>
           <SurfaceCard accent="success">
@@ -298,13 +296,11 @@ export default function StudyScreen() {
           </SurfaceCard>
         </Animated.View>
       ) : !currentWord ? (
-        <SurfaceCard muted style={styles.emptyCard}>
-          <View style={styles.emptyIcon}>
-            <Ionicons name="sparkles-outline" size={22} color={palette.accent} />
-          </View>
-          <Text style={styles.progressTitle}>Bugünlük temiz</Text>
-          <Text style={styles.progressText}>Yeni tekrar zamanı geldiğinde kartların burada parlayacak.</Text>
-        </SurfaceCard>
+        <FeedbackState
+          title="Bugünlük temiz"
+          description="Yeni tekrar zamanı geldiğinde kartların burada görünecek."
+          icon="checkmark-done-outline"
+        />
       ) : (
         <Animated.View
           {...panResponder.panHandlers}

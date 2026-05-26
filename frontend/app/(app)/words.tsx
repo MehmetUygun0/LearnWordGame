@@ -1,8 +1,9 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import * as ExpoRouter from 'expo-router';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -12,6 +13,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatCard } from '@/components/ui/StatCard';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { WordCard } from '@/components/ui/WordCard';
+import { FeedbackState } from '@/components/ui/FeedbackState';
 import { useAuth } from '@/lib/auth-context';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 import { createUserWord, getWords, WordListItem, WordLevel } from '@/services/words';
@@ -31,6 +33,7 @@ export default function WordsScreen() {
   const [turkishWord, setTurkishWord] = useState('');
   const [sampleSentence, setSampleSentence] = useState('');
   const [samples, setSamples] = useState<string[]>([]);
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [formLevel, setFormLevel] = useState<WordLevel>('A1');
   const [formNotice, setFormNotice] = useState('');
 
@@ -94,7 +97,7 @@ export default function WordsScreen() {
           engWordName: trimmedEnglish,
           turWordName: trimmedTurkish,
           level: formLevel,
-          generatedImageUrl: null,
+          generatedImageUrl: selectedImageUri,
           audioUrl: null,
           samples: samples.length ? samples : sampleSentence.trim() ? [sampleSentence.trim()] : [],
         },
@@ -106,6 +109,7 @@ export default function WordsScreen() {
       setTurkishWord('');
       setSampleSentence('');
       setSamples([]);
+      setSelectedImageUri(null);
       setFormNotice(token === 'demo-session' ? 'Demo kelime listeye eklendi.' : 'Kelime backend tarafına kaydedildi.');
     } catch (error) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -113,6 +117,36 @@ export default function WordsScreen() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      setFormNotice('Görsel seçmek için galeri izni gerekli.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.82,
+    });
+
+    if (result.canceled || !result.assets?.[0]?.uri) {
+      return;
+    }
+
+    await Haptics.selectionAsync();
+    setSelectedImageUri(result.assets[0].uri);
+    setFormNotice('Görsel seçildi. Backend medya alanını desteklediğinde kalıcı kaydedilecek.');
+  };
+
+  const handleRemoveSample = async (index: number) => {
+    await Haptics.selectionAsync();
+    setSamples((currentSamples) => currentSamples.filter((_, sampleIndex) => sampleIndex !== index));
+    setFormNotice('Örnek cümle kaldırıldı.');
   };
 
   return (
@@ -193,22 +227,34 @@ export default function WordsScreen() {
         {samples.length ? (
           <View style={styles.sampleList}>
             {samples.map((sample, index) => (
-              <View key={`${sample}-${index}`} style={styles.sampleChip}>
+              <Pressable key={`${sample}-${index}`} onPress={() => handleRemoveSample(index)} style={styles.sampleChip}>
                 <Text style={styles.sampleText}>{index + 1}. {sample}</Text>
-              </View>
+                <Ionicons name="close-circle-outline" size={18} color={palette.textFaint} />
+              </Pressable>
             ))}
           </View>
         ) : null}
 
         <Text style={styles.fieldLabel}>Medya</Text>
         <View style={styles.mediaRow}>
-          <View style={styles.mediaBox}>
-            <View style={styles.mediaIcon}>
-              <Ionicons name="sparkles-outline" size={22} color={palette.accent} />
-            </View>
-            <Text style={styles.mediaText}>AI görsel</Text>
-            <Text style={styles.mediaHint}>Kelimeye özel görsel burada görünür.</Text>
-          </View>
+          <Pressable onPress={handlePickImage} style={styles.mediaBox}>
+            {selectedImageUri ? (
+              <>
+                <Image source={{ uri: selectedImageUri }} style={styles.selectedImage} />
+                <Pressable onPress={() => setSelectedImageUri(null)} style={styles.removeImageButton}>
+                  <Ionicons name="close-outline" size={18} color={palette.text} />
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <View style={styles.mediaIcon}>
+                  <Ionicons name="image-outline" size={22} color={palette.accent} />
+                </View>
+                <Text style={styles.mediaText}>Görsel seç</Text>
+                <Text style={styles.mediaHint}>Kelimeye özel resmi galeriden ekle.</Text>
+              </>
+            )}
+          </Pressable>
 
           <View style={styles.mediaBox}>
             <View style={styles.mediaIcon}>
@@ -255,10 +301,7 @@ export default function WordsScreen() {
       </SurfaceCard>
 
       {isLoading ? (
-        <SurfaceCard muted style={styles.loadingState}>
-          <ActivityIndicator color={palette.text} />
-          <Text style={styles.sectionText}>Kelimeler hazırlanıyor...</Text>
-        </SurfaceCard>
+        <FeedbackState title="Kelimeler hazırlanıyor" description="Kelime havuzu backendden yükleniyor." loading />
       ) : filteredWords.length ? (
         <View style={styles.cardsColumn}>
           {filteredWords.map((word) => (
@@ -270,13 +313,11 @@ export default function WordsScreen() {
           ))}
         </View>
       ) : (
-        <SurfaceCard muted style={styles.emptyCard}>
-          <View style={styles.emptyIcon}>
-            <Ionicons name="search-outline" size={22} color={palette.accent} />
-          </View>
-          <Text style={styles.sectionTitle}>Bu havuzda yok</Text>
-          <Text style={styles.sectionText}>Aramayı sadeleştir veya farklı bir seviye seç.</Text>
-        </SurfaceCard>
+        <FeedbackState
+          title="Bu havuzda yok"
+          description="Aramayı sadeleştir veya farklı bir seviye seç."
+          icon="search-outline"
+        />
       )}
     </ScreenContainer>
   );
@@ -357,6 +398,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xs,
     padding: spacing.md,
+    overflow: 'hidden',
+  },
+  selectedImage: {
+    width: '100%',
+    height: 116,
+    borderRadius: radius.md,
+    backgroundColor: palette.cardMuted,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 30,
+    height: 30,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(17, 24, 39, 0.78)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mediaIcon: {
     width: 42,
@@ -387,10 +446,15 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderWidth: 1,
     borderColor: palette.borderSoft,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   sampleText: {
     ...typography.caption,
     color: palette.textMuted,
+    flex: 1,
   },
   noticeText: {
     ...typography.caption,

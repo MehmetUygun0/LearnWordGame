@@ -1,28 +1,36 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { FeedbackState } from '@/components/ui/FeedbackState';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 import { useAuth } from '@/lib/auth-context';
-import { createWordChain, WordChainResult } from '@/services/word-chain';
+import { createWordChain, saveWordChainImage, WordChainResult } from '@/services/word-chain';
 
 export default function WordChainScreen() {
   const { token } = useAuth();
   const [result, setResult] = useState<WordChainResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const loadChain = useCallback(async () => {
     setIsLoading(true);
     setSavedMessage('');
+    setErrorMessage('');
 
     try {
       setResult(await createWordChain(token));
+    } catch (error) {
+      setResult(null);
+      setErrorMessage(getWordChainErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -31,6 +39,25 @@ export default function WordChainScreen() {
   useEffect(() => {
     loadChain();
   }, [loadChain]);
+
+  const handleSaveImage = async () => {
+    if (!result?.imageUri || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const uri = await saveWordChainImage(result.imageUri);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setSavedMessage(`Görsel app içinde kaydedildi: ${uri.split('/').pop()}`);
+    } catch {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setSavedMessage('Görsel kaydedilemedi. Lütfen tekrar dene.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <ScreenContainer scrollable>
@@ -41,10 +68,7 @@ export default function WordChainScreen() {
       />
 
       {isLoading ? (
-        <SurfaceCard muted style={styles.loadingCard}>
-          <ActivityIndicator color={palette.text} />
-          <Text style={styles.caption}>Word Chain hazırlanıyor...</Text>
-        </SurfaceCard>
+        <FeedbackState title="Word Chain hazırlanıyor" description="Hikaye ve görsel çıktısı üretiliyor." loading />
       ) : result ? (
         <>
           <SurfaceCard style={styles.chainCard}>
@@ -77,16 +101,22 @@ export default function WordChainScreen() {
               <AppButton label="Yeni zincir üret" onPress={loadChain} variant="secondary" />
               <AppButton
                 label="App içinde kaydet"
-                onPress={() => setSavedMessage('Word Chain çıktısı bu oturum için kaydedildi.')}
+                loading={isSaving}
+                disabled={!result.imageUri}
+                onPress={handleSaveImage}
               />
             </View>
           </SurfaceCard>
         </>
       ) : (
-        <SurfaceCard muted>
-          <Text style={styles.sectionTitle}>Zincir oluşturulamadı</Text>
-          <Text style={styles.bodyText}>Kelime havuzu dolduğunda bu ekran otomatik üretim yapacak.</Text>
-        </SurfaceCard>
+        <FeedbackState
+          title="Zincir oluşturulamadı"
+          description={errorMessage || 'Yeterli öğrenilmiş kelime olduğunda bu ekran üretim yapacak.'}
+          icon="alert-circle-outline"
+          actionLabel="Tekrar dene"
+          actionIcon="refresh-outline"
+          onAction={loadChain}
+        />
       )}
 
       <SurfaceCard muted>
@@ -166,3 +196,21 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
 });
+
+const getWordChainErrorMessage = (error: unknown) => {
+  const message = error instanceof Error ? error.message : '';
+
+  if (message.toLocaleLowerCase('tr-TR').includes('5 kelime')) {
+    return 'Word Chain için önce en az 5 öğrenilmiş kelime gerekiyor.';
+  }
+
+  if (message.toLocaleLowerCase('tr-TR').includes('api anahtarı')) {
+    return 'Hikaye üretim servisi için OpenAI anahtarı eksik görünüyor.';
+  }
+
+  if (message.toLocaleLowerCase('tr-TR').includes('comfy') || message.toLocaleLowerCase('tr-TR').includes('gorsel')) {
+    return 'Hikaye üretildi ancak görsel servisi hazır değil. ComfyUI/workflow ayarı kontrol edilmeli.';
+  }
+
+  return message || 'Word Chain servisi şu anda yanıt vermiyor.';
+};

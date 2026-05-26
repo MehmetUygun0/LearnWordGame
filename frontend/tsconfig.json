@@ -2,7 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "jsx": "react-native",
+    "jsx": "react-jsx",
     "skipLibCheck": true,
     "paths": {
       "@/*": [
@@ -36,6 +36,7 @@
     "components/ui/AnimatedProgressBar.tsx",
     "components/ui/ConfettiBurst.tsx",
     "components/ui/FlipTile.tsx",
+    "components/ui/FeedbackState.tsx",
     "components/ui/ProgressMeter.tsx",
     "components/ui/PulseIcon.tsx",
     "components/ui/RevealStageTimeline.tsx",

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import config from '@/lib/config';
 
 const buildUrl = (path: string) => `${config.API_URL}${path}`;

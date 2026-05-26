@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { WordListItem, getDailyWords, getWordsForLevel, saveWordTestResults } from '@/services/words';
 
 export type StudyOverview = {
@@ -25,6 +24,7 @@ export type StudySession = {
 
 export type StudyAnswerResult = {
   isCorrect: boolean;
+  isNearMiss?: boolean;
   correctAnswer: string;
   nextReviewLabel: string;
   currentStep: number;
@@ -97,12 +97,18 @@ export const submitStudyAnswer = ({
 }): StudyAnswerResult => {
   const normalizedAnswer = answer.trim().toLocaleLowerCase('tr-TR');
   const normalizedCorrect = word.turWordName.trim().toLocaleLowerCase('tr-TR');
-  const isCorrect = normalizedAnswer === normalizedCorrect;
+  const distance = levenshteinDistance(normalizedAnswer, normalizedCorrect);
+  const isNearMiss =
+    normalizedAnswer.length >= 4 &&
+    normalizedCorrect.length >= 4 &&
+    distance <= 1;
+  const isCorrect = normalizedAnswer === normalizedCorrect || isNearMiss;
   const currentStep = isCorrect ? Math.min((word.stage ?? 0) + 1, 6) : 0;
   const nextReviewLabel = currentStep >= 6 ? 'Tamamlandı' : reviewSteps[currentStep];
 
   return {
     isCorrect,
+    isNearMiss,
     correctAnswer: word.turWordName,
     nextReviewLabel: isCorrect ? nextReviewLabel : 'Bugün tekrar',
     currentStep,
@@ -115,6 +121,27 @@ export const submitStudyAnswer = ({
     badgeLabel: isCorrect && currentStep >= 3 ? 'Seri devam ediyor' : undefined,
     source: 'mock',
   };
+};
+
+const levenshteinDistance = (left: string, right: string) => {
+  const rows = Array.from({ length: left.length + 1 }, (_, index) => [index]);
+
+  for (let column = 1; column <= right.length; column++) {
+    rows[0][column] = column;
+  }
+
+  for (let row = 1; row <= left.length; row++) {
+    for (let column = 1; column <= right.length; column++) {
+      const substitutionCost = left[row - 1] === right[column - 1] ? 0 : 1;
+      rows[row][column] = Math.min(
+        rows[row - 1][column] + 1,
+        rows[row][column - 1] + 1,
+        rows[row - 1][column - 1] + substitutionCost
+      );
+    }
+  }
+
+  return rows[left.length][right.length];
 };
 
 export const saveStudyAnswerResult = async ({

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import config from '@/lib/config';
 import { apiRequest, getErrorMessage, readResponsePayload } from '@/lib/api';
 
@@ -166,18 +165,22 @@ export const getCurrentUserRequest = async (accessToken: string) => {
 };
 
 const normalizeTokenPair = (payload: unknown) => {
+  const tokenPayload =
+    payload && typeof payload === 'object'
+      ? (payload as Record<string, unknown>)
+      : null;
+
   if (
-    !payload ||
-    typeof payload !== 'object' ||
-    typeof payload.accessToken !== 'string' ||
-    typeof payload.refreshToken !== 'string'
+    !tokenPayload ||
+    typeof tokenPayload.accessToken !== 'string' ||
+    typeof tokenPayload.refreshToken !== 'string'
   ) {
     throw new Error('Beklenen oturum yanıtı alınamadı.');
   }
 
   return {
-    accessToken: payload.accessToken,
-    refreshToken: payload.refreshToken,
+    accessToken: tokenPayload.accessToken,
+    refreshToken: tokenPayload.refreshToken,
   };
 };
 

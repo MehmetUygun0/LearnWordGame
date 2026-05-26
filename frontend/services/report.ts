@@ -1,4 +1,3 @@
-// @ts-nocheck
 import config from '@/lib/config';
 import { apiRequest, readResponsePayload } from '@/lib/api';
 import { AuthUser } from '@/services/auth';
@@ -34,6 +33,12 @@ export type ReportSummary = {
     words: number;
     percentage?: number;
   }[];
+  topicStats: {
+    topic: string;
+    words: number;
+    learnedWords: number;
+    successRate: number;
+  }[];
   weeklyTrend: {
     day: string;
     correctRate: number;
@@ -60,7 +65,11 @@ export const getReportSummary = async (
     const payload = await readResponsePayload(response);
 
     if (response.ok && payload && typeof payload === 'object') {
-      return normalizeApiReport(payload, user);
+      const words = await getWords(token);
+      return {
+        ...normalizeApiReport(payload, user),
+        topicStats: buildTopicStats(words),
+      };
     }
   }
 
@@ -93,6 +102,7 @@ export const getReportSummary = async (
       label: stage === 0 ? 'Yeni' : `${stage}. adım`,
       words: words.filter((word) => (word.stage ?? 0) === stage).length,
     })),
+    topicStats: buildTopicStats(words),
     weeklyTrend: [
       { day: 'Pzt', correctRate: 62 },
       { day: 'Sal', correctRate: 70 },
@@ -161,6 +171,7 @@ const normalizeApiReport = (payload: any, user: AuthUser | null): ReportSummary 
           label: stage === 0 ? 'Yeni' : `${stage}. adım`,
           words: 0,
         })),
+    topicStats: [],
     weeklyTrend: Array.isArray(payload.reviewBuckets)
       ? payload.reviewBuckets.map((item: any) => ({
           day: String(item.bucket ?? '-').slice(0, 12),
@@ -170,6 +181,81 @@ const normalizeApiReport = (payload: any, user: AuthUser | null): ReportSummary 
     difficultWords: [],
     source: 'api',
   };
+};
+
+const topicRules = [
+  {
+    topic: 'Seyahat ve yönler',
+    keywords: ['route', 'journey', 'travel', 'trip', 'road', 'way', 'path', 'map', 'station', 'airport', 'hotel'],
+  },
+  {
+    topic: 'Doğa ve hayvanlar',
+    keywords: ['tree', 'forest', 'river', 'mountain', 'sea', 'rain', 'snow', 'tiger', 'bird', 'robin', 'animal', 'flower'],
+  },
+  {
+    topic: 'İnsan ve duygu',
+    keywords: ['people', 'person', 'child', 'family', 'friend', 'happy', 'sad', 'fear', 'hope', 'brain', 'mind', 'memory'],
+  },
+  {
+    topic: 'İş ve eğitim',
+    keywords: ['work', 'job', 'school', 'learn', 'study', 'plan', 'project', 'office', 'meeting', 'class', 'teacher'],
+  },
+  {
+    topic: 'Soyut kavramlar',
+    keywords: ['idea', 'noble', 'resilient', 'articulate', 'success', 'failure', 'change', 'reason', 'truth', 'value'],
+  },
+  {
+    topic: 'Günlük yaşam',
+    keywords: ['home', 'food', 'water', 'car', 'phone', 'time', 'day', 'night', 'morning', 'evening', 'shop'],
+  },
+];
+
+const buildTopicStats = (words: any[]) => {
+  const buckets = new Map<string, any>();
+
+  for (const word of words) {
+    const topic = detectTopic(word);
+    const current = buckets.get(topic) ?? {
+      topic,
+      words: 0,
+      learnedWords: 0,
+      totalCorrect: 0,
+      totalAttempts: 0,
+    };
+
+    current.words += 1;
+    current.learnedWords += (word.stage ?? 0) >= 6 ? 1 : 0;
+    current.totalCorrect += word.successCount ?? 0;
+    current.totalAttempts += (word.successCount ?? 0) + (word.wrongCount ?? 0);
+    buckets.set(topic, current);
+  }
+
+  return Array.from(buckets.values())
+    .map((item) => ({
+      topic: item.topic,
+      words: item.words,
+      learnedWords: item.learnedWords,
+      successRate: item.totalAttempts
+        ? Math.round((item.totalCorrect / item.totalAttempts) * 100)
+        : Math.round((item.learnedWords / Math.max(item.words, 1)) * 100),
+    }))
+    .sort((left, right) => right.words - left.words || right.successRate - left.successRate);
+};
+
+const detectTopic = (word: any) => {
+  const haystack = [
+    word.engWordName,
+    word.turWordName,
+    ...(Array.isArray(word.samples) ? word.samples : []),
+  ]
+    .join(' ')
+    .toLocaleLowerCase('en-US');
+
+  const matchedRule = topicRules.find((rule) =>
+    rule.keywords.some((keyword) => haystack.includes(keyword))
+  );
+
+  return matchedRule?.topic ?? 'Genel kelime havuzu';
 };
 
 const toStringList = (value: unknown) => {
