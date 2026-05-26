@@ -25,16 +25,16 @@ namespace Backend.Controllers
         [HttpPost("add")]
         public async Task<IActionResult> AddWord([FromBody] AddWordDto dto)//kullanıcı kelime eklerken bu endpointi kullanacak
         {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "-1");
-            if (userId == -1)
-                return Unauthorized("Refresh token geçersiz veya süresi dolmuş.");
-
             UserWord word = new UserWord
             {
-                UserId = userId,
+                UserId = (int)userId,
                 EngWordName = dto.EngWordName,
                 TurWordName = dto.TurWordName,
                 Level = "FromUsers"
@@ -54,12 +54,12 @@ namespace Backend.Controllers
         [HttpGet("get-myword")]
         public async Task<IActionResult> GetUsersWord()//kullanıcının eklediği kelimeleri getiri.
         {
+
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "-1");
-            if (userId == -1)
-                return Unauthorized("Refresh token geçersiz veya süresi dolmuş.");
 
             return Ok(await _context.UserWords.Where(x => x.UserId == userId).Select(x => new WordDTO
             {
@@ -97,7 +97,7 @@ namespace Backend.Controllers
                 .ToListAsync();
 
             int lastReviewCount = lastProgressWords.Count() == 0 ? 0 : lastProgressWords.First().ReviewCount;
-            DateTime? lastNextReviewDate = lastProgressWords.Count() == 0 ?  DateTime.MinValue : lastProgressWords.First().NextReviewDate;
+            DateTime? lastNextReviewDate = lastProgressWords.Count() == 0 ? DateTime.MinValue : lastProgressWords.First().NextReviewDate;
 
 
             var necessarylastProgressWords = lastProgressWords.Where(x => x.ReviewCount == lastReviewCount && x.NextReviewDate == lastNextReviewDate).Select(word => new WordDTO
@@ -188,7 +188,7 @@ namespace Backend.Controllers
             var progresses = await _context.UserWordProgresses
             .Where(x => x.UserId == userId && wordIds.Contains(x.WordId))
             .ToDictionaryAsync(x => x.WordId);
-            
+
             foreach (var dtoItem in dto)
             {
                 if (!progresses.TryGetValue(dtoItem.WordId, out var progressItem))
@@ -197,10 +197,10 @@ namespace Backend.Controllers
                     {
                         UserId = (int)userId,
                         WordId = dtoItem.WordId,
-                        CurrentStep = Step.Start, 
+                        CurrentStep = Step.Start,
                         ReviewCount = 0
                     };
-                    _context.UserWordProgresses.Add(progressItem); 
+                    _context.UserWordProgresses.Add(progressItem);
                 }
 
                 progressItem.LastCorrectDate = dtoItem.IsCorrect ? DateTime.UtcNow : (DateTime?)null;

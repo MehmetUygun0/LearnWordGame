@@ -218,14 +218,15 @@ namespace Backend.Controllers
         [HttpPut("profile/daily-words")]
         public async Task<IActionResult> UpdateDailyWords([FromBody] UpdateDailyWordsDto dto)//günlük kaç yeni kelime öğrenmek istediğini güncelleme endpointi
         {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
             if (dto.DailyNewWords < 5 || dto.DailyNewWords > 25)
             {
                 return BadRequest(new { message = "Günlük yeni kelime sayısı 5 ile 25 arasında olmalıdır." });
             }
 
-            var userId = GetUserId();
-            if (userId == null)
-                return Unauthorized();
 
             var progressSettings = await _context.UserProgressSettings
                 .FirstOrDefaultAsync(setting => setting.UserId == userId);
