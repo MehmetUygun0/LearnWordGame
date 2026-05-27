@@ -132,19 +132,7 @@ namespace Backend.Controllers
             }).ToList();
             userProgressSetting.SkipCount += userProgressSetting.NumberOfNewWords;
 
-            DateTime GetNextReviewDate(Step step)
-            {
-                return step switch
-                {
-                    Step.Start => DateTime.UtcNow.AddDays(1),
-                    Step.Step1 => DateTime.UtcNow.AddDays(5),
-                    Step.Step2 => DateTime.UtcNow.AddDays(7),
-                    Step.Step3 => DateTime.UtcNow.AddDays(21),
-                    Step.Step4 => DateTime.UtcNow.AddMonths(1),
-                    Step.Step5 => DateTime.UtcNow.AddMonths(2),
-                    _ => DateTime.UtcNow.AddDays(1)
-                };
-            }
+            
 
             var userWordProgresses = newWords.Select(word => new UserWordProgress
             {
@@ -161,6 +149,19 @@ namespace Backend.Controllers
             var result = necessarylastProgressWords.Concat(newWords).ToList();
             return Ok(result);
         }
+        DateTime GetNextReviewDate(Step step)
+        {
+            return step switch
+            {
+                Step.Start => DateTime.UtcNow.AddDays(1),
+                Step.Step1 => DateTime.UtcNow.AddDays(5),
+                Step.Step2 => DateTime.UtcNow.AddDays(7),
+                Step.Step3 => DateTime.UtcNow.AddDays(21),
+                Step.Step4 => DateTime.UtcNow.AddMonths(1),
+                Step.Step5 => DateTime.UtcNow.AddMonths(2),
+                _ => DateTime.UtcNow.AddDays(1)
+            };
+        }
         [Authorize]
         [HttpPost("test-result")]
         public async Task<IActionResult> SaveTestResult([FromBody] List<WordTestResultDTO> dto)//günlük kelimelerin test sonuçlarını kaydedecek.
@@ -168,19 +169,7 @@ namespace Backend.Controllers
             var userId = GetUserId();
             if (userId == null)
                 return Unauthorized();
-            DateTime GetNextReviewDate(Step step)
-            {
-                return step switch
-                {
-                    Step.Start => DateTime.UtcNow.AddDays(1),
-                    Step.Step1 => DateTime.UtcNow.AddDays(5),
-                    Step.Step2 => DateTime.UtcNow.AddDays(7),
-                    Step.Step3 => DateTime.UtcNow.AddDays(21),
-                    Step.Step4 => DateTime.UtcNow.AddMonths(1),
-                    Step.Step5 => DateTime.UtcNow.AddMonths(2),
-                    _ => DateTime.UtcNow.AddDays(1)
-                };
-            }
+            
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
