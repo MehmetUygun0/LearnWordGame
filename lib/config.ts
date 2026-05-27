@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
-const DEFAULT_API_URL = 'http://localhost:5000';
-const DEFAULT_ANDROID_API_URL = 'http://10.0.2.2:5000';
+const DEFAULT_API_URL = 'http://localhost:5184';
+const DEFAULT_ANDROID_API_URL = 'http://10.0.2.2:5184';
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
@@ -31,7 +31,7 @@ const config = {
       RESET_PASSWORD: '/api/User/reset-password',
       REFRESH: '/api/User/refresh',
       PROFILE: '/api/User/profile',
-      UPDATE_DAILY_WORDS: '/api/User/profile/daily-word',
+      UPDATE_DAILY_WORDS: '/api/User/profile/daily-words',
       UPDATE_LEVEL: '/api/User/profile/users-level-update',
     },
     WORDS: {
