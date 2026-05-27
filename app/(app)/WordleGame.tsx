@@ -1,5 +1,4 @@
 // WordleGame.tsx — React Native Wordle
-/* eslint-disable react-hooks/exhaustive-deps */
 // Works with Expo (expo start) or bare React Native CLI.
 // Change API_BASE to your C# backend URL.
 
@@ -79,6 +78,8 @@ export default function WordleGame() {
   const [currentCol, setCurrentCol] = useState(0);
   const [keyColors, setKeyColors]   = useState<Record<string, TileStatus>>({});
   const [gameOver, setGameOver]     = useState(false);
+  const [won, setWon]               = useState(false);
+  const [answer, setAnswer]         = useState<string | null>(null);
   const [message, setMessage]       = useState("");
   const [loading, setLoading]       = useState(false);
 
@@ -100,6 +101,8 @@ export default function WordleGame() {
     setCurrentCol(0);
     setKeyColors({});
     setGameOver(false);
+    setWon(false);
+    setAnswer(null);
     setMessage("");
     // Reset flip anims
     flipAnims.forEach(row => row.forEach(a => a.setValue(0)));
@@ -213,6 +216,8 @@ export default function WordleGame() {
 
         if (data.gameOver) {
           setGameOver(true);
+          setWon(data.won);
+          if (data.answer) setAnswer(data.answer.toUpperCase());
           showMessage(data.won ? "Brilliant! 🎉" : `The word was ${data.answer?.toUpperCase()}`, 4000);
         } else {
           setCurrentRow(r => r + 1);
