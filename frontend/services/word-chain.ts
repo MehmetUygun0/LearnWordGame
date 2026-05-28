@@ -24,7 +24,7 @@ export const createWordChain = async (token?: string | null): Promise<WordChainR
 
     if (response.ok && payload?.story) {
       return {
-        words: [],
+        words: Array.isArray(payload.words) ? payload.words.map(normalizeChainWord) : [],
         story: String(payload.story),
         imagePrompt: 'Backend LLM ve görsel çıktısı',
         imageUri: payload.image ? `data:image/png;base64,${payload.image}` : '',
@@ -45,6 +45,16 @@ export const createWordChain = async (token?: string | null): Promise<WordChainR
     source: 'local',
   };
 };
+
+const normalizeChainWord = (item: any): WordListItem => ({
+  id: Number(item.id ?? item.wordId),
+  engWordName: String(item.engWordName ?? ''),
+  turWordName: String(item.turWordName ?? ''),
+  level: item.level ?? 'A1',
+  pictureUrl: null,
+  audioUrl: null,
+  samples: [],
+});
 
 const buildChain = (words: WordListItem[]) => {
   const available = words.filter((word) => word.engWordName.length >= 3);

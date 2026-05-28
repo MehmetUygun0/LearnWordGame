@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AnimatedProgressBar } from '@/components/ui/AnimatedProgressBar';
@@ -41,7 +41,13 @@ export default function ReportScreen() {
 
   const handleExport = async () => {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setExportNotice('Rapor hazırlanıyor. Paylaşılabilir çıktı burada görünecek.');
+    if (Platform.OS === 'web' && typeof globalThis.print === 'function') {
+      setExportNotice('Tarayıcı yazdırma penceresi açılıyor.');
+      setTimeout(() => globalThis.print(), 100);
+      return;
+    }
+
+    setExportNotice('Rapor ekranda çıktıya hazır. Mobilde ekran görüntüsü veya sistem paylaşımı ile teslim edilebilir.');
   };
 
   return (

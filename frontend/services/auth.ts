@@ -69,8 +69,22 @@ export const registerRequest = async ({ userName, password, email }: RegisterInp
     }),
   });
 
+  if (response.status === 409 && email?.trim()) {
+    return loginRequest({
+      userName: email.trim(),
+      password,
+    });
+  }
+
   const payload = await readResponsePayload(response);
   ensureSuccess(response, payload, 'Kayıt sırasında bir sorun oluştu.');
+
+  if (response.status === 409 && email?.trim()) {
+    return loginRequest({
+      userName: email.trim(),
+      password,
+    });
+  }
 
   return loginRequest({
     userName,
