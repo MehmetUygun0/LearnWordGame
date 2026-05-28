@@ -217,7 +217,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("WordID");
 
-                    b.ToTable("WordSample");
+                    b.ToTable("WordSample", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Models.UserWordProgress", b =>
