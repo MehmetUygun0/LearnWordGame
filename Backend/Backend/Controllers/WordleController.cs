@@ -35,11 +35,15 @@ namespace Backend.Controllers
         private async Task<WordleDTO> GetRandomWordFromDatabase(int id)
         {
             Random rnd = new Random();
-            IQueryable<Word?> query = _context.UserWordProgresses.AsQueryable().AsNoTracking()
-                .Where(x => x.UserId == id).Select(x => x.Word)
+            IQueryable<Word> query = _context.UserWordProgresses.AsQueryable().AsNoTracking()
+                .Where(x => x.UserId == id && x.IsLearned && x.Word != null)
+                .Select(x => x.Word!)
                 .Where(x => x.EngWordName.Length >= WordLengthFloor && x.EngWordName.Length <= WordLengthTop);
 
             int wordCount = await query.CountAsync();
+            if (wordCount == 0)
+                return new WordleDTO { EngWordName = "learn" };
+
             int randomIndex = rnd.Next(wordCount);
             var randomWord = await query.Select(x => new WordleDTO { EngWordName = x.EngWordName }).Skip(randomIndex).FirstOrDefaultAsync();
             return randomWord ?? new WordleDTO { EngWordName = "error" };

@@ -13,16 +13,20 @@
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                // 1 dakika bekle
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                }
+                catch (OperationCanceledException) // TaskCanceledException bu sınıftan türetilir
+                {
+                    // Servis dururken bekleme iptal edildi — düzgün çıkış
+                    break;
+                }
 
-                // Süresi dolanları temizle
-                
-                lock (_store.Codes) // Liste üzerinde işlem yaparken kilitleyelim
+                lock (_store.Codes)
                 {
                     _store.Codes.RemoveAll(x => x.ResetCodeExpiry < DateTime.UtcNow);
                 }
-                //Console.WriteLine("Temizlikçi: Süresi dolan kodlar havadan silindi.");
             }
         }
     }

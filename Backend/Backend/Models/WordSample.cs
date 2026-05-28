@@ -15,6 +15,6 @@ namespace Backend.Models
         [Required]
         public required string TurSamples { get; set; }
 
-        public virtual Word Word { get; set; }
+        public virtual Word? Word { get; set; }
     }
 }
