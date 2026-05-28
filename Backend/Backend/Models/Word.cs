@@ -18,6 +18,6 @@ namespace Backend.Models
         public string Level { get; set; } = null!;
         [NotMapped]
         public string PictureUrl => $"/uploads/images/{Picture}";
-        public virtual ICollection<WordSample> WordSamples { get; set; }
+        public virtual ICollection<WordSample> WordSamples { get; set; } = new List<WordSample>();
     }
 }

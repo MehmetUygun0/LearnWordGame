@@ -91,8 +91,8 @@ namespace Backend.Controllers
             }
 
             var lastProgressWords = await _context.UserWordProgresses
-                .Where(x => x.UserId == userId && x.NextReviewDate <= DateTime.UtcNow.Date)
-                .Include(x => x.Word).ThenInclude(w => w.WordSamples)
+                .Where(x => x.UserId == userId && x.NextReviewDate <= DateTime.UtcNow.Date && x.Word != null)
+                .Include(x => x.Word).ThenInclude(w => w!.WordSamples)
                 .OrderBy(x => x.NextReviewDate).ThenBy(x => x.ReviewCount)
                 .ToListAsync();
 
@@ -103,10 +103,10 @@ namespace Backend.Controllers
             var necessarylastProgressWords = lastProgressWords.Where(x => x.ReviewCount == lastReviewCount && x.NextReviewDate == lastNextReviewDate).Select(word => new WordDTO
             {
                 WordId = word.WordId,
-                EngWordName = word.Word.EngWordName,
-                TurWordName = word.Word.TurWordName,
-                Level = word.Word.Level,
-                WordSamples = word.Word.WordSamples.Select(s => new WordSampleDTO
+                EngWordName = word.Word!.EngWordName,
+                TurWordName = word.Word!.TurWordName,
+                Level = word.Word!.Level,
+                WordSamples = word.Word!.WordSamples.Select(s => new WordSampleDTO
                 {
                     Id = s.Id,
                     EngSamples = s.EngSamples,
