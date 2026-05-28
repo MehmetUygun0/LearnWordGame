@@ -35,11 +35,10 @@ namespace Backend.Controllers
             User? userFromDb = await _context.Users
             .Where(u => u.Email == dto.Email)
             .FirstOrDefaultAsync();
-            var listecik = await _context.Users.ToListAsync();
 
             if (userFromDb != null)
             {
-                return NotFound(new { message = "Kullanıcı zaten var." });
+                return Conflict(new { message = "Bu e-posta ile kayıtlı kullanıcı zaten var. Giriş yapmayı deneyebilirsin." });
             }
 
             await _context.Users.AddAsync(new User { UserName = dto.UserName, Password = hashedPassword, Email = dto.Email, CreatedAt = DateTime.UtcNow });
@@ -50,7 +49,8 @@ namespace Backend.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == dto.UserName);
+            string identity = dto.UserName.Trim();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == identity || u.Email == identity);
 
             if (user is null)
             {
@@ -59,7 +59,7 @@ namespace Backend.Controllers
             byte[]? userPassword = user.Password;
             if (SHA256.VerifyPassword(dto.Password, userPassword))
             {
-                var accessToken = JwtHelper.GenerateToken(dto.UserName, user.Id.ToString());
+                var accessToken = JwtHelper.GenerateToken(user.UserName, user.Id.ToString());
                 var refreshToken = JwtHelper.GenerateRefreshToken();
 
                 user.RefreshToken = refreshToken;
@@ -205,7 +205,7 @@ namespace Backend.Controllers
             var profile = new ProfileDto
             {
                 UserName = user.UserName,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = user.CreatedAt,
                 Level = progressSettings.UserLevel,
                 TotalLearnedWords = Math.Max(progressSettings.TotalWordsLearned, learnedWordProgresses.Count),
                 DailyNewWords = progressSettings.NumberOfNewWords,

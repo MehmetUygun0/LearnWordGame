@@ -184,12 +184,22 @@ namespace Backend.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                List<string> candidateWords = await _context.UserWordProgresses
+                List<WordDTO> candidateWords = await _context.UserWordProgresses
                     .AsNoTracking()
-                    .Where(x => x.UserId == userId.Value && x.Word != null)
-                    .Select(x => x.Word!.EngWordName)
-                    .Distinct()
+                    .Where(x => x.UserId == userId.Value && x.IsLearned && x.Word != null)
+                    .Select(x => new WordDTO
+                    {
+                        WordId = x.Word!.Id,
+                        EngWordName = x.Word.EngWordName,
+                        TurWordName = x.Word.TurWordName,
+                        Level = x.Word.Level,
+                        WordSamples = null
+                    })
                     .ToListAsync();
+                candidateWords = candidateWords
+                    .GroupBy(x => x.WordId)
+                    .Select(x => x.First())
+                    .ToList();
 
                 if (candidateWords.Count < RequiredWordCount)
                 {
@@ -200,20 +210,24 @@ namespace Backend.Controllers
                 }
 
                 Random rnd = new Random();
-                HashSet<string> selectedWords = new HashSet<string>();
+                List<WordDTO> selectedWords = new List<WordDTO>();
+                HashSet<int> selectedWordIds = new HashSet<int>();
 
                 while (selectedWords.Count < RequiredWordCount)
                 {
                     int randomIndex = rnd.Next(candidateWords.Count);
-                    selectedWords.Add(candidateWords[randomIndex]);
+                    WordDTO word = candidateWords[randomIndex];
+                    if (selectedWordIds.Add(word.WordId))
+                        selectedWords.Add(word);
                 }
 
-                string story = await GetStoryWithLLM(selectedWords, userProgressSettings.UserLevel);
+                string story = await GetStoryWithLLM(selectedWords.Select(x => x.EngWordName).ToHashSet(), userProgressSettings.UserLevel);
                 string imagePath = await GetImagePathWithLLM(story);
                 byte[] imageBytes = await System.IO.File.ReadAllBytesAsync(imagePath);
 
                 return Ok(new
                 {
+                    words = selectedWords,
                     story,
                     image = Convert.ToBase64String(imageBytes)
                 });

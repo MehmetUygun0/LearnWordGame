@@ -32,16 +32,54 @@ namespace Backend.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            UserWord word = new UserWord
+            Word word = new Word
+            {
+                EngWordName = dto.EngWordName.Trim(),
+                TurWordName = dto.TurWordName.Trim(),
+                Level = string.IsNullOrWhiteSpace(dto.Level) ? "A1" : dto.Level.Trim(),
+                Picture = dto.Picture
+            };
+
+            _context.Words.Add(word);
+            await _context.SaveChangesAsync();
+
+            var samples = dto.Samples
+                .Where(sample => !string.IsNullOrWhiteSpace(sample))
+                .Select(sample => new WordSample
+                {
+                    WordID = word.Id,
+                    EngSamples = sample.Trim(),
+                    TurSamples = string.Empty
+                })
+                .ToList();
+
+            if (samples.Count > 0)
+                await _context.WordSamples.AddRangeAsync(samples);
+
+            UserWord userWord = new UserWord
             {
                 UserId = (int)userId,
-                EngWordName = dto.EngWordName,
-                TurWordName = dto.TurWordName,
-                Level = "FromUsers"
+                EngWordName = word.EngWordName,
+                TurWordName = word.TurWordName,
+                Level = word.Level
             };
-            var username = HttpContext.User.Identity?.Name;
 
-            _context.UserWords.Add(word);
+            bool hasProgress = await _context.UserWordProgresses
+                .AnyAsync(progress => progress.UserId == userId && progress.WordId == word.Id);
+
+            if (!hasProgress)
+            {
+                await _context.UserWordProgresses.AddAsync(new UserWordProgress
+                {
+                    UserId = userId.Value,
+                    WordId = word.Id,
+                    CurrentStep = Step.Start,
+                    ReviewCount = 0,
+                    NextReviewDate = DateTime.UtcNow.Date
+                });
+            }
+
+            _context.UserWords.Add(userWord);
             await _context.SaveChangesAsync();
 
             return Ok(new
@@ -90,9 +128,10 @@ namespace Backend.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            var today = DateTime.UtcNow.Date;
             var lastProgressWords = await _context.UserWordProgresses
-                .Where(x => x.UserId == userId && x.NextReviewDate <= DateTime.UtcNow.Date && x.Word != null)
-                .Include(x => x.Word).ThenInclude(w => w!.WordSamples)
+                .Where(x => x.UserId == userId && x.NextReviewDate <= DateTime.UtcNow.Date)
+                .Include(x => x.Word).ThenInclude(w => w.WordSamples)
                 .OrderBy(x => x.NextReviewDate).ThenBy(x => x.ReviewCount)
                 .ToListAsync();
 
@@ -103,10 +142,10 @@ namespace Backend.Controllers
             var necessarylastProgressWords = lastProgressWords.Where(x => x.ReviewCount == lastReviewCount && x.NextReviewDate == lastNextReviewDate).Select(word => new WordDTO
             {
                 WordId = word.WordId,
-                EngWordName = word.Word!.EngWordName,
-                TurWordName = word.Word!.TurWordName,
-                Level = word.Word!.Level,
-                WordSamples = word.Word!.WordSamples.Select(s => new WordSampleDTO
+                EngWordName = word.Word.EngWordName,
+                TurWordName = word.Word.TurWordName,
+                Level = word.Word.Level,
+                WordSamples = word.Word.WordSamples.Select(s => new WordSampleDTO
                 {
                     Id = s.Id,
                     EngSamples = s.EngSamples,
@@ -115,35 +154,47 @@ namespace Backend.Controllers
             }).ToList();
 
 
-            var newWords = _context.Words.AsNoTracking().Include(w => w.WordSamples).Where(x => x.Level == userProgressSetting.UserLevel)
-            .Skip(userProgressSetting.SkipCount).Take(userProgressSetting.NumberOfNewWords)
-            .Select(w => new WordDTO
+            var trackedWordIds = await _context.UserWordProgresses
+                .Where(x => x.UserId == userId)
+                .Select(x => x.WordId)
+                .ToListAsync();
+
+            List<WordDTO> newWords = new();
+
+            if (userProgressSetting.LastDailyWord.Date < today)
             {
-                WordId = w.Id,
-                EngWordName = w.EngWordName,
-                TurWordName = w.TurWordName,
-                Level = w.Level,
-                WordSamples = w.WordSamples.Select(s => new WordSampleDTO
+                newWords = await _context.Words.AsNoTracking()
+                    .Include(w => w.WordSamples)
+                    .Where(x => x.Level == userProgressSetting.UserLevel && !trackedWordIds.Contains(x.Id))
+                    .OrderBy(x => x.Id)
+                    .Take(userProgressSetting.NumberOfNewWords)
+                    .Select(w => new WordDTO
+                    {
+                        WordId = w.Id,
+                        EngWordName = w.EngWordName,
+                        TurWordName = w.TurWordName,
+                        Level = w.Level,
+                        WordSamples = w.WordSamples.Select(s => new WordSampleDTO
+                        {
+                            Id = s.Id,
+                            EngSamples = s.EngSamples,
+                            TurSamples = s.TurSamples
+                        }).ToList()
+                    }).ToListAsync();
+
+                var userWordProgresses = newWords.Select(word => new UserWordProgress
                 {
-                    Id = s.Id,
-                    EngSamples = s.EngSamples,
-                    TurSamples = s.TurSamples
-                }).ToList()
-            }).ToList();
-            userProgressSetting.SkipCount += userProgressSetting.NumberOfNewWords;
+                    WordId = word.WordId,
+                    UserId = userId.Value,
+                    CurrentStep = Step.Start,
+                    LastCorrectDate = null,
+                    NextReviewDate = today,
+                }).ToList();
 
-            
+                await _context.UserWordProgresses.AddRangeAsync(userWordProgresses);
+                userProgressSetting.LastDailyWord = today;
+            }
 
-            var userWordProgresses = newWords.Select(word => new UserWordProgress
-            {
-                WordId = word.WordId,
-                UserId = userId.Value,
-                CurrentStep = Step.Start,
-                LastCorrectDate = null,
-                NextReviewDate = GetNextReviewDate(Step.Start),
-            }).ToList();
-
-            await _context.UserWordProgresses.AddRangeAsync(userWordProgresses);
             await _context.SaveChangesAsync();
 
             var result = necessarylastProgressWords.Concat(newWords).ToList();
@@ -153,13 +204,13 @@ namespace Backend.Controllers
         {
             return step switch
             {
-                Step.Start => DateTime.UtcNow.AddDays(1),
-                Step.Step1 => DateTime.UtcNow.AddDays(5),
-                Step.Step2 => DateTime.UtcNow.AddDays(7),
-                Step.Step3 => DateTime.UtcNow.AddDays(21),
-                Step.Step4 => DateTime.UtcNow.AddMonths(1),
-                Step.Step5 => DateTime.UtcNow.AddMonths(2),
-                _ => DateTime.UtcNow.AddDays(1)
+                Step.Start => DateTime.UtcNow.Date.AddDays(1),
+                Step.Step1 => DateTime.UtcNow.Date.AddDays(7),
+                Step.Step2 => DateTime.UtcNow.Date.AddMonths(1),
+                Step.Step3 => DateTime.UtcNow.Date.AddMonths(3),
+                Step.Step4 => DateTime.UtcNow.Date.AddMonths(6),
+                Step.Step5 => DateTime.UtcNow.Date.AddYears(1),
+                _ => DateTime.UtcNow.Date.AddDays(1)
             };
         }
         [Authorize]
@@ -192,13 +243,40 @@ namespace Backend.Controllers
                     _context.UserWordProgresses.Add(progressItem);
                 }
 
-                progressItem.LastCorrectDate = dtoItem.IsCorrect ? DateTime.UtcNow : (DateTime?)null;
-                progressItem.NextReviewDate = dtoItem.IsCorrect ? GetNextReviewDate(progressItem.CurrentStep) : DateTime.UtcNow.AddDays(2);
-                progressItem.CurrentStep = dtoItem.IsCorrect ? progressItem.CurrentStep + 1 : Step.Start;
-                progressItem.ReviewCount += dtoItem.IsCorrect ? 1 : 0;
-                progressItem.IsLearned = progressItem.CurrentStep > Step.Step5;
+                if (progressItem.IsLearned)
+                    continue;
+
+                if (dtoItem.IsCorrect)
+                {
+                    Step nextStep = progressItem.CurrentStep + 1;
+                    progressItem.LastCorrectDate = DateTime.UtcNow.Date;
+                    progressItem.NextReviewDate = nextStep > Step.Step5 ? null : GetNextReviewDate(progressItem.CurrentStep);
+                    progressItem.CurrentStep = nextStep;
+                    progressItem.ReviewCount += 1;
+                    progressItem.IsLearned = nextStep >= Step.Step6;
+                }
+                else
+                {
+                    progressItem.LastCorrectDate = null;
+                    progressItem.NextReviewDate = DateTime.UtcNow.Date;
+                    progressItem.CurrentStep = Step.Start;
+                    progressItem.ReviewCount = 0;
+                    progressItem.IsLearned = false;
+                }
             }
+
             await _context.SaveChangesAsync();
+
+            UserProgressSettings? settings = await _context.UserProgressSettings
+                .FirstOrDefaultAsync(x => x.UserId == userId.Value);
+
+            if (settings != null)
+            {
+                settings.TotalWordsLearned = await _context.UserWordProgresses
+                    .CountAsync(x => x.UserId == userId.Value && x.IsLearned);
+                await _context.SaveChangesAsync();
+            }
+
             return Ok();
         }
 

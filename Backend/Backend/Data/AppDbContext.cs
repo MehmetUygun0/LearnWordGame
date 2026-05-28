@@ -16,10 +16,13 @@ namespace Backend.Data
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+            modelBuilder.Entity<WordSample>()
+                .ToTable("WordSample");
             base.OnModelCreating(modelBuilder);
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Word> Words { get; set; }
+        public DbSet<WordSample> WordSamples { get; set; }
         public DbSet<UserWord> UserWords { get; set; }
         public DbSet<UserWordProgress> UserWordProgresses { get; set; }
         public DbSet<UserProgressSettings> UserProgressSettings { get; set; }
