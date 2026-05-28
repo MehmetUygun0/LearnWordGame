@@ -186,7 +186,7 @@ namespace Backend.Controllers
 
                 List<WordDTO> candidateWords = await _context.UserWordProgresses
                     .AsNoTracking()
-                    .Where(x => x.UserId == userId.Value && x.IsLearned && x.Word != null)
+                    .Where(x => x.UserId == userId.Value && x.Word != null)
                     .Select(x => new WordDTO
                     {
                         WordId = x.Word!.Id,
